@@ -28,7 +28,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const data = await request.json()
     
     // Parse headers if it's a string, otherwise use as object
-    let headersData = {}
+    let headersData: any = {}
     if (typeof data.headers === 'string') {
       try {
         headersData = JSON.parse(data.headers)
@@ -39,6 +39,10 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     } else if (data.headers) {
       headersData = data.headers
     }
+    // ensure showInMenu persisted
+    try {
+      headersData.showInMenu = data.showInMenu === true
+    } catch {}
     
     const updateData: any = {
       name: data.name,
@@ -50,13 +54,6 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       isActive: data.isActive
     }
 
-    // persist showInMenu inside headers JSON for compatibility
-    try {
-      const h = typeof data.headers === 'string' ? JSON.parse(data.headers) : (data.headers || {})
-      ;(h as any).showInMenu = data.showInMenu === true
-      updateData.headers = JSON.stringify(h)
-    } catch {}
-
     if (data.categoryId) {
       updateData.category = { connect: { id: data.categoryId } }
     }
@@ -67,11 +64,32 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       updateData.user = { connect: { id: data.userId } }
     }
 
+    // optional FK validation to return clearer messages
+    try {
+      if (data.categoryId) {
+        const cat = await db.reportCategory.findById(data.categoryId)
+        if (!cat) return NextResponse.json({ error: 'Kategori bulunamadı' }, { status: 400 })
+      }
+      if (data.companyId) {
+        const comp = await db.company.findById(data.companyId)
+        if (!comp) return NextResponse.json({ error: 'Firma bulunamadı' }, { status: 400 })
+      }
+      if (data.userId) {
+        const usr = await db.user.findById(data.userId)
+        if (!usr) return NextResponse.json({ error: 'Kullanıcı bulunamadı' }, { status: 400 })
+      }
+    } catch (e) {
+      console.error('FK validation (PUT) error:', e)
+    }
+
     const report = await db.reportConfig.update(params.id, updateData)
     
     return NextResponse.json({ report })
   } catch (error) {
     console.error('Error updating report config:', error)
+    if (error instanceof Error) {
+      return NextResponse.json({ error: 'Rapor güncellenemedi: ' + error.message }, { status: 500 })
+    }
     return NextResponse.json({ error: 'Failed to update report config' }, { status: 500 })
   }
 }
