@@ -117,8 +117,22 @@ export async function POST(request: NextRequest) {
       if (!data.categoryId || !data.companyId || !data.userId) {
         return NextResponse.json({ error: 'categoryId, companyId ve userId zorunlu' }, { status: 400 })
       }
-      const [cat, comp, usr] = await Promise.all([
-        db.reportCategory.findById(data.categoryId),
+      // Resolve category: support mock ids (cat-satis, cat-finansal)
+      let cat = await db.reportCategory.findById(data.categoryId)
+      if (!cat && typeof data.categoryId === 'string' && data.categoryId.startsWith('cat-')) {
+        const mockName = data.categoryId === 'cat-satis' ? 'Satış Raporları' : (data.categoryId === 'cat-finansal' ? 'Finansal Raporlar' : null)
+        if (mockName) {
+          try {
+            const allCats = await db.reportCategory.findAll()
+            const found = allCats.find((c: any) => c.name === mockName)
+            if (found) {
+              cat = found
+              data.categoryId = found.id
+            }
+          } catch {}
+        }
+      }
+      const [comp, usr] = await Promise.all([
         db.company.findById(data.companyId),
         db.user.findById(data.userId)
       ])
