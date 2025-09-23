@@ -809,7 +809,7 @@ export function EnhancedDataGrid({
       console.log('📏 Sütunları içeriğe göre boyutlandırılıyor...')
       
       // Get all columns
-        const allColumns = gridApi.getColumns()
+        const allColumns = gridApi.getColumns?.() || (gridColumnApi?.getAllColumns?.() || [])
       if (allColumns && allColumns.length > 0) {
         console.log(`📊 Found ${allColumns.length} columns to resize`)
         
@@ -823,9 +823,9 @@ export function EnhancedDataGrid({
         } else {
           console.log('🔧 Using manual column sizing')
           // Method 2: Manual auto-sizing based on content
-          allColumns.forEach(column => {
+          allColumns.forEach((column: any) => {
             try {
-            const colDef = column.getColDef()
+            const colDef = column.getColDef ? column.getColDef() : column.colDef
               const field = colDef.field
               const headerName = colDef.headerName || field || 'Unknown'
               
@@ -849,7 +849,11 @@ export function EnhancedDataGrid({
               
               console.log(`📏 Column ${headerName}: content width ${maxWidth}, final width ${finalWidth}`)
               if (gridApi && !gridApi.isDestroyed?.()) {
-                gridApi.setColumnWidth(column, finalWidth)
+                if (gridApi.setColumnWidth) {
+                  gridApi.setColumnWidth(column, finalWidth)
+                } else if (gridColumnApi?.setColumnWidth) {
+                  gridColumnApi.setColumnWidth(column, finalWidth)
+                }
               }
             } catch (columnError) {
               console.warn('⚠️ Column sizing error:', columnError)
@@ -1670,32 +1674,7 @@ export function EnhancedDataGrid({
             >
               <Type className="w-4 h-4" />
             </Button>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  try {
-                    const next = !pivotMode
-                    setPivotMode(next)
-                    if (gridApi && !gridApi.isDestroyed?.()) {
-                      if ((gridApi as any).setPivotMode) {
-                        ;(gridApi as any).setPivotMode(next)
-                      }
-                      // apply saved column state order as-is
-                      if (next) ensurePivotDefaults()
-                      saveGridSettings({ silent: true })
-                    }
-                  } catch (e) {
-                    console.warn('Pivot toggle error:', e)
-                  }
-                }}
-                title="Pivot Aç/Kapat"
-                className={"bg-white border-gray-200 hover:bg-gray-100 text-xs " + (pivotMode ? 'ring-1 ring-blue-300' : '')}
-              >
-                {pivotMode ? 'Pivot: Açık' : 'Pivot: Kapalı'}
-              </Button>
-            </div>
+            {/* Pivot toggle removed as requested */}
 
             <div className="flex items-center gap-1">
               <Button
@@ -1703,9 +1682,10 @@ export function EnhancedDataGrid({
                 size="sm"
                 onClick={saveGridSettingsSQL}
                 title="Firma+Kullanıcı Bazlı SQL Kaydet"
-                className="bg-amber-50 border-amber-200 hover:bg-amber-100"
+                className="bg-amber-50 border-amber-200 hover:bg-amber-100 flex items-center gap-1"
               >
-                SQL Kaydet
+                <Save className="w-4 h-4" />
+                <span>SQL Kaydet</span>
               </Button>
             </div>
 
