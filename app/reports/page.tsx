@@ -302,6 +302,12 @@ export default function ReportsPage() {
     if (headers.value) {
       headersObject['url'] = headers.value
     }
+
+    // Collect multi-selected users and store in headers as allowedUserIds
+    const selectedUserIds = formData.getAll('userIds') as string[]
+    if (selectedUserIds && selectedUserIds.length > 0) {
+      ;(headersObject as any).allowedUserIds = selectedUserIds
+    }
     
     const reportData = {
       name: formData.get('name') as string,
@@ -355,6 +361,17 @@ export default function ReportsPage() {
   }
 
   if (showForm) {
+    // Derive existing allowedUserIds from headers for edit mode
+    let existingAllowedUserIds: string[] = []
+    try {
+      if (editingReport?.headers) {
+        const h = typeof editingReport.headers === 'string' 
+          ? JSON.parse(editingReport.headers) 
+          : (editingReport.headers as any)
+        if (Array.isArray(h?.allowedUserIds)) existingAllowedUserIds = h.allowedUserIds
+      }
+    } catch {}
+
     return (
       <div className="p-8">
         <Card className="max-w-4xl mx-auto">
@@ -506,6 +523,23 @@ export default function ReportsPage() {
                       </option>
                     ))}
                   </select>
+                </div>
+                <div>
+                  <Label htmlFor="userIds">Kullanıcılar (çoklu)</Label>
+                  <select 
+                    id="userIds" 
+                    name="userIds" 
+                    multiple
+                    defaultValue={existingAllowedUserIds}
+                    className="min-h-28 flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    {users.map(user => (
+                      <option key={user.id} value={user.id}>
+                        {user.firstName} {user.lastName} ({user.username})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-gray-500 mt-1">Birden fazla kullanıcı seçmek için Ctrl/Command tuşunu kullanın.</p>
                 </div>
               </div>
               
