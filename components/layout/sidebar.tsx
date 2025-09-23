@@ -123,12 +123,32 @@ export function Sidebar() {
     const loadData = async () => {
       try {
         console.log('Loading sidebar data...')
-        // Load categories
-        const categoriesResponse = await fetch('/api/report-categories')
-        const categoriesData = await categoriesResponse.json()
-        console.log('📂 Categories loaded:', categoriesData.categories?.length || 0)
-        console.log('📂 Categories data:', categoriesData.categories)
-        setReportCategories(categoriesData.categories || [])
+        // Load categories with retry + cache
+        const fetchWithRetry = async (url: string, cacheKey: string, attempts = 3, delayMs = 300): Promise<any> => {
+          for (let i = 0; i < attempts; i++) {
+            try {
+              const res = await fetch(url)
+              if (res.ok) {
+                const json = await res.json()
+                try { sessionStorage.setItem(cacheKey, JSON.stringify({ t: Date.now(), data: json })) } catch {}
+                return json
+              }
+            } catch {}
+            await new Promise(r => setTimeout(r, delayMs * (i + 1)))
+          }
+          try {
+            const cached = sessionStorage.getItem(cacheKey)
+            if (cached) return JSON.parse(cached).data
+          } catch {}
+          return null
+        }
+
+        const categoriesData = await fetchWithRetry('/api/report-categories', 'cache-report-categories')
+        console.log('📂 Categories loaded:', categoriesData?.categories?.length || 0)
+        if (categoriesData?.categories?.length) {
+          console.log('📂 Categories data:', categoriesData.categories)
+          setReportCategories(categoriesData.categories)
+        }
         
         // Auto-expand categories when loaded
         const categoryIds = (categoriesData.categories || [])
@@ -143,12 +163,8 @@ export function Sidebar() {
           })
         }
 
-        // Load reports
-        const reportsResponse = await fetch('/api/report-configs')
-        let reportsData: any = { reports: [] }
-        if (reportsResponse.ok) {
-          try { reportsData = await reportsResponse.json() } catch {}
-        }
+        // Load reports with retry + cache
+        const reportsData = await fetchWithRetry('/api/report-configs', 'cache-report-configs') || { reports: [] }
         console.log('Loaded reports:', reportsData.reports?.length || 0)
         
         // Debug: Check showInMenu status
@@ -157,7 +173,7 @@ export function Sidebar() {
           return report
         }) || []
         
-        setReports(reportsWithMenuStatus)
+        if (Array.isArray(reportsWithMenuStatus)) setReports(reportsWithMenuStatus)
         console.log('📊 Reports set for sidebar:', reportsWithMenuStatus.length)
       } catch (error) {
         console.error('Error loading data:', error)
