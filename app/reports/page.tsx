@@ -303,11 +303,7 @@ export default function ReportsPage() {
       headersObject['url'] = headers.value
     }
 
-    // Collect multi-selected users and store in headers as allowedUserIds
-    const selectedUserIds = formData.getAll('userIds') as string[]
-    if (selectedUserIds && selectedUserIds.length > 0) {
-      ;(headersObject as any).allowedUserIds = selectedUserIds
-    }
+    // No multi-user selection; keep single userId only
     
     const reportData = {
       name: formData.get('name') as string,
@@ -361,17 +357,6 @@ export default function ReportsPage() {
   }
 
   if (showForm) {
-    // Derive existing allowedUserIds from headers for edit mode
-    let existingAllowedUserIds: string[] = []
-    try {
-      if (editingReport?.headers) {
-        const h = typeof editingReport.headers === 'string' 
-          ? JSON.parse(editingReport.headers) 
-          : (editingReport.headers as any)
-        if (Array.isArray(h?.allowedUserIds)) existingAllowedUserIds = h.allowedUserIds
-      }
-    } catch {}
-
     return (
       <div className="p-8">
         <Card className="max-w-4xl mx-auto">
@@ -524,25 +509,7 @@ export default function ReportsPage() {
                     ))}
                   </select>
                 </div>
-                <div>
-                  <Label>Kullanıcılar (çoklu seçim)</Label>
-                  <div className="mt-2 max-h-44 overflow-auto rounded-md border border-input p-2">
-                    {users.map(user => (
-                      <label key={user.id} className="flex items-center gap-2 py-1">
-                        <input
-                          type="checkbox"
-                          name="userIds"
-                          value={user.id}
-                          defaultChecked={existingAllowedUserIds.includes(user.id)}
-                          className="h-4 w-4"
-                        />
-                        <span className="text-sm text-gray-800">
-                          {user.firstName} {user.lastName} ({user.username})
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
+                {/* Çoklu kullanıcı seçimi kaldırıldı */}
               </div>
               
               <div className="grid grid-cols-2 gap-4">

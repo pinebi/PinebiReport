@@ -215,16 +215,6 @@ export function Sidebar() {
                   
                   return false
                 })
-                // Filter by allowedUserIds if present
-                .filter(report => {
-                  try {
-                    const h = typeof (report as any).headers === 'string' ? JSON.parse((report as any).headers) : (report as any).headers
-                    if (Array.isArray(h?.allowedUserIds)) {
-                      return !!user && h.allowedUserIds.includes(user.id)
-                    }
-                  } catch {}
-                  return true
-                })
                 
                 console.log(`📊 Category ${category.name} has ${categoryReports.length} reports:`, categoryReports.map(r => r.name))
                 
@@ -279,16 +269,6 @@ export function Sidebar() {
                     child.id === report.categoryId && child.parentId === category.id
                   )
                   return !!childCategory
-                })
-                // Filter by allowedUserIds if present
-                .filter(report => {
-                  try {
-                    const h = typeof (report as any).headers === 'string' ? JSON.parse((report as any).headers) : (report as any).headers
-                    if (Array.isArray(h?.allowedUserIds)) {
-                      return !!user && h.allowedUserIds.includes(user.id)
-                    }
-                  } catch {}
-                  return true
                 })
                 
                 console.log(`📊 Category ${category.name} (ID: ${category.id}) has ${categoryReports.length} reports:`, categoryReports.map(r => `${r.name} (catId: ${r.categoryId})`))
