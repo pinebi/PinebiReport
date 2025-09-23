@@ -29,6 +29,23 @@ export default function ReportsPage() {
     loadData()
   }, [])
 
+  // Ensure reference data exists when form opens (for edit/create)
+  useEffect(() => {
+    const ensureFormRefs = async () => {
+      if (!showForm) return
+      try {
+        const tasks: Promise<any>[] = []
+        if (companies.length === 0) tasks.push(fetch('/api/companies').then(r => r.ok ? r.json() : { companies: [] }).then(j => setCompanies(j.companies || [])))
+        if (users.length === 0) tasks.push(fetch('/api/users').then(r => r.ok ? r.json() : { users: [] }).then(j => setUsers(j.users || [])))
+        if (categories.length === 0) tasks.push(fetch('/api/report-categories').then(r => r.ok ? r.json() : { categories: [] }).then(j => setCategories(j.categories || [])))
+        if (tasks.length) await Promise.all(tasks)
+      } catch (e) {
+        console.warn('ensureFormRefs error:', e)
+      }
+    }
+    ensureFormRefs()
+  }, [showForm])
+
   const loadData = async () => {
     setLoading(true)
     try {
