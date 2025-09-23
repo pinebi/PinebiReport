@@ -39,7 +39,7 @@ export function MainDashboard() {
   const [loading, setLoading] = useState(true)
   const [startDate, setStartDate] = useState(() => {
     const date = new Date()
-    date.setDate(date.getDate() - 7) // Default to last 7 days
+    date.setDate(date.getDate() - 1) // Default to yesterday
     return date.toISOString().split('T')[0]
   })
   const [endDate, setEndDate] = useState(() => {
