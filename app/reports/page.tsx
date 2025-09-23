@@ -332,6 +332,14 @@ export default function ReportsPage() {
       headersObject.allowedUserIds = selectedUserIds
     }
     
+    // Validation: require at least one user
+    const primaryUserId = ((selectedUserIds && selectedUserIds[0]) || (formData.get('userId') as string)) as string
+    if (!primaryUserId) {
+      alert('Lütfen en az bir kullanıcı seçiniz')
+      setLoading(false)
+      return
+    }
+
     const reportData = {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
@@ -341,8 +349,8 @@ export default function ReportsPage() {
       headers: JSON.stringify(headersObject),
       categoryId: formData.get('categoryId') as string,
       companyId: formData.get('companyId') as string,
-      // Backward compatibility: set primary userId as first selected (if any), otherwise from single select
-      userId: ((selectedUserIds && selectedUserIds[0]) || (formData.get('userId') as string)) as string,
+      // Backward compatibility: primary user is first selected
+      userId: primaryUserId,
       isActive: formData.get('isActive') === 'true',
       showInMenu: formData.get('showInMenu') === 'on', // Checkbox değeri
     }

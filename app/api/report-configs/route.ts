@@ -112,6 +112,24 @@ export async function POST(request: NextRequest) {
     // Generate unique ID
     const id = 'report_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
     
+    // Validate foreign keys
+    try {
+      if (!data.categoryId || !data.companyId || !data.userId) {
+        return NextResponse.json({ error: 'categoryId, companyId ve userId zorunlu' }, { status: 400 })
+      }
+      const [cat, comp, usr] = await Promise.all([
+        db.reportCategory.findById(data.categoryId),
+        db.company.findById(data.companyId),
+        db.user.findById(data.userId)
+      ])
+      if (!cat) return NextResponse.json({ error: 'Kategori bulunamadı' }, { status: 400 })
+      if (!comp) return NextResponse.json({ error: 'Firma bulunamadı' }, { status: 400 })
+      if (!usr) return NextResponse.json({ error: 'Kullanıcı bulunamadı' }, { status: 400 })
+    } catch (e) {
+      console.error('FK validation error:', e)
+      return NextResponse.json({ error: 'İlişkiler doğrulanamadı' }, { status: 400 })
+    }
+
     const report = await db.reportConfig.create({
       id: id,
       name: data.name,
@@ -131,6 +149,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ report: { ...report, showInMenu: (headersData as any).showInMenu } }, { status: 201 })
   } catch (error) {
     console.error('Report config creation error:', error)
+    if (error instanceof Error) {
+      console.error('Message:', error.message)
+      return NextResponse.json(
+        { error: 'Rapor oluşturulurken hata: ' + error.message },
+        { status: 500 }
+      )
+    }
     return NextResponse.json(
       { error: 'Rapor oluşturulurken hata oluştu' },
       { status: 500 }
