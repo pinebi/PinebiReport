@@ -321,12 +321,16 @@ export default function ReportsPage() {
     const formData = new FormData(e.currentTarget)
     
     // Convert single header to object - store URL as "url" key
-    const headersObject: Record<string, string> = {}
+      const headersObject: Record<string, any> = {}
     if (headers.value) {
       headersObject['url'] = headers.value
     }
-
-    // No multi-user selection; keep single userId only
+    
+    // Multi-user selection: collect userIds and persist in headers.allowedUserIds
+    const selectedUserIds = formData.getAll('userIds') as string[]
+    if (selectedUserIds && selectedUserIds.length > 0) {
+      headersObject.allowedUserIds = selectedUserIds
+    }
     
     const reportData = {
       name: formData.get('name') as string,
@@ -337,7 +341,8 @@ export default function ReportsPage() {
       headers: JSON.stringify(headersObject),
       categoryId: formData.get('categoryId') as string,
       companyId: formData.get('companyId') as string,
-      userId: formData.get('userId') as string,
+      // Backward compatibility: set primary userId as first selected (if any), otherwise from single select
+      userId: ((selectedUserIds && selectedUserIds[0]) || (formData.get('userId') as string)) as string,
       isActive: formData.get('isActive') === 'true',
       showInMenu: formData.get('showInMenu') === 'on', // Checkbox değeri
     }
@@ -532,7 +537,32 @@ export default function ReportsPage() {
                     ))}
                   </select>
                 </div>
-                {/* Çoklu kullanıcı seçimi kaldırıldı */}
+                {/* Çoklu kullanıcı seçimi (Kullanıcı *) */}
+                <div>
+                  <Label htmlFor="userIds">Kullanıcı * (çoklu seçim)</Label>
+                  <select 
+                    id="userIds" 
+                    name="userIds" 
+                    multiple
+                    defaultValue={(function(){
+                      try {
+                        if (editingReport?.headers) {
+                          const h = typeof editingReport.headers === 'string' ? JSON.parse(editingReport.headers) : (editingReport.headers as any)
+                          if (Array.isArray(h?.allowedUserIds)) return h.allowedUserIds
+                        }
+                      } catch {}
+                      return editingReport?.userId ? [editingReport.userId] : []
+                    })() as any}
+                    className="min-h-28 flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    {users.map(user => (
+                      <option key={user.id} value={user.id}>
+                        {user.firstName} {user.lastName} ({user.username})
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-sm text-gray-500 mt-1">Bir veya birden fazla kullanıcı seçin. İlk seçilen kullanıcı ana kullanıcı olarak kaydedilir.</p>
+                </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
