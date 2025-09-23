@@ -55,7 +55,21 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 
     if (data.categoryId) {
-      updateData.category = { connect: { id: data.categoryId } }
+      // Map mock ids to DB categories if needed
+      try {
+        let catId = data.categoryId
+        if (typeof catId === 'string' && catId.startsWith('cat-')) {
+          const mockName = catId === 'cat-satis' ? 'Satış Raporları' : (catId === 'cat-finansal' ? 'Finansal Raporlar' : null)
+          if (mockName) {
+            const allCats = await db.reportCategory.findAll()
+            const found = allCats.find((c: any) => c.name === mockName)
+            if (found) catId = found.id
+          }
+        }
+        updateData.category = { connect: { id: catId } }
+      } catch {
+        updateData.category = { connect: { id: data.categoryId } }
+      }
     }
     if (data.companyId) {
       updateData.company = { connect: { id: data.companyId } }
