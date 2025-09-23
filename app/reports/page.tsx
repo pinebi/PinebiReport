@@ -525,21 +525,23 @@ export default function ReportsPage() {
                   </select>
                 </div>
                 <div>
-                  <Label htmlFor="userIds">Kullanıcılar (çoklu)</Label>
-                  <select 
-                    id="userIds" 
-                    name="userIds" 
-                    multiple
-                    defaultValue={existingAllowedUserIds}
-                    className="min-h-28 flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  >
+                  <Label>Kullanıcılar (çoklu seçim)</Label>
+                  <div className="mt-2 max-h-44 overflow-auto rounded-md border border-input p-2">
                     {users.map(user => (
-                      <option key={user.id} value={user.id}>
-                        {user.firstName} {user.lastName} ({user.username})
-                      </option>
+                      <label key={user.id} className="flex items-center gap-2 py-1">
+                        <input
+                          type="checkbox"
+                          name="userIds"
+                          value={user.id}
+                          defaultChecked={existingAllowedUserIds.includes(user.id)}
+                          className="h-4 w-4"
+                        />
+                        <span className="text-sm text-gray-800">
+                          {user.firstName} {user.lastName} ({user.username})
+                        </span>
+                      </label>
                     ))}
-                  </select>
-                  <p className="text-sm text-gray-500 mt-1">Birden fazla kullanıcı seçmek için Ctrl/Command tuşunu kullanın.</p>
+                  </div>
                 </div>
               </div>
               
