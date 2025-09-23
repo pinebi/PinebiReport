@@ -1,0 +1,158 @@
+/* AG-Grid Özel Hizalama Stilleri */
+
+/* Header hizalamaları */
+.ag-header-left .ag-header-cell-text {
+  text-align: left !important;
+  justify-content: flex-start !important;
+}
+
+.ag-header-center .ag-header-cell-text {
+  text-align: center !important;
+  justify-content: center !important;
+}
+
+.ag-header-right .ag-header-cell-text {
+  text-align: right !important;
+  justify-content: flex-end !important;
+}
+
+/* Cell hizalamaları */
+.ag-cell-center {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.ag-cell-right {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  text-align: right !important;
+  padding-right: 12px !important;
+}
+
+.ag-cell-left {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
+  padding-left: 12px !important;
+}
+
+/* Sütun boyutlandırma iyileştirmeleri */
+.ag-theme-alpine .ag-header-cell {
+  padding: 8px 12px !important;
+}
+
+.ag-theme-alpine .ag-cell {
+  padding: 8px 4px !important;
+  line-height: 1.4 !important;
+}
+
+/* Numeric sütunlar için özel stil - ORTALANMIŞ */
+.ag-theme-alpine .ag-cell.ag-cell-numeric {
+  text-align: center !important;
+  justify-content: center !important;
+  display: flex !important;
+  align-items: center !important;
+  font-family: 'Segoe UI', monospace !important;
+  font-weight: 500 !important;
+}
+
+/* Numeric column headers */
+.ag-theme-alpine .ag-header-cell.ag-header-numeric {
+  text-align: center !important;
+}
+
+.ag-theme-alpine .ag-header-cell.ag-header-numeric .ag-header-cell-text {
+  justify-content: center !important;
+}
+
+/* Toplam satırı için özel stil */
+.ag-theme-alpine .ag-row-pinned {
+  font-weight: bold !important;
+  background-color: #f1f5f9 !important;
+  border-top: 2px solid #cbd5e1 !important;
+  color: #1e293b !important;
+}
+
+/* Tema destekli satır efektleri */
+.ag-theme-alpine .ag-row:hover {
+  background-color: var(--ag-row-hover-color, #e0f2fe) !important;
+  transition: background-color 0.2s ease !important;
+}
+
+.ag-theme-alpine .ag-row-pinned:hover {
+  opacity: 0.9 !important;
+}
+
+/* Tema destekli zebra striping */
+.ag-theme-alpine .ag-row-odd {
+  background-color: var(--ag-odd-row-background-color, #f8fafc) !important;
+}
+
+.ag-theme-alpine .ag-row-even {
+  background-color: var(--ag-even-row-background-color, #ffffff) !important;
+}
+
+/* Tema destekli seçili satır stilleri */
+.ag-theme-alpine .ag-row-selected {
+  background-color: var(--ag-selected-row-background-color, #dbeafe) !important;
+}
+
+.ag-theme-alpine .ag-row-selected:hover {
+  opacity: 0.8 !important;
+}
+
+/* Tema destekli header stilleri */
+.ag-theme-alpine .ag-header {
+  background-color: var(--ag-header-background-color, #f8fafc) !important;
+  color: var(--ag-header-foreground-color, #1f2937) !important;
+}
+
+.ag-theme-alpine .ag-header-cell {
+  background-color: var(--ag-header-background-color, #f8fafc) !important;
+  color: var(--ag-header-foreground-color, #1f2937) !important;
+  border-right: 1px solid var(--ag-border-color, #e2e8f0) !important;
+}
+
+/* Responsive sütun genişlikleri */
+@media (max-width: 768px) {
+  .ag-theme-alpine .ag-header-cell {
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+  }
+  
+  .ag-theme-alpine .ag-cell {
+    padding: 6px 4px !important;
+    font-size: 12px !important;
+  }
+}
+
+/* Sidebar genişlik ayarı */
+.ag-theme-alpine .ag-side-bar {
+  width: 300px !important;
+  min-width: 250px !important;
+  max-width: 400px !important;
+}
+
+/* Filter floating panel stilleri */
+.ag-theme-alpine .ag-floating-filter-input {
+  text-align: center !important;
+}
+
+/* Header sort ikonları için yer */
+.ag-theme-alpine .ag-header-cell-label {
+  justify-content: center !important;
+}
+
+/* Sütun resize handle'ları */
+.ag-theme-alpine .ag-header-cell-resize {
+  opacity: 0.3 !important;
+  transition: opacity 0.2s !important;
+}
+
+.ag-theme-alpine .ag-header-cell:hover .ag-header-cell-resize {
+  opacity: 1 !important;
+}

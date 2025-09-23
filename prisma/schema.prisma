@@ -1,0 +1,166 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id        String         @id @default(cuid())
+  name      String
+  code      String         @unique
+  address   String?
+  phone     String?
+  email     String?
+  taxNumber String?
+  isActive  Boolean        @default(true)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  reports   ReportConfig[]
+  users     User[]
+
+  @@map("Companies")
+}
+
+model User {
+  id             String               @id @default(cuid())
+  username       String               @unique
+  email          String               @unique
+  firstName      String
+  lastName       String
+  password       String
+  companyId      String
+  role           String               @default("USER")
+  isActive       Boolean              @default(true)
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+  reports        ReportConfig[]
+  executions     ReportExecution[]
+  reportSettings UserReportSettings[]
+  gridSettings   UserGridSettings[]
+  company        Company              @relation(fields: [companyId], references: [id], onUpdate: NoAction)
+
+  @@map("Users")
+}
+
+model ReportCategory {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  parentId    String?
+  icon        String?
+  color       String?
+  sortOrder   Int              @default(0)
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  parent      ReportCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  children    ReportCategory[] @relation("CategoryHierarchy")
+  reports     ReportConfig[]
+
+  @@map("ReportCategories")
+}
+
+model ReportConfig {
+  id           String               @id @default(cuid())
+  name         String
+  description  String?
+  endpointUrl  String
+  apiUsername  String
+  apiPassword  String
+  headers      String?
+  categoryId   String
+  companyId    String
+  userId       String
+  isActive     Boolean              @default(true)
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  category     ReportCategory       @relation(fields: [categoryId], references: [id], onUpdate: NoAction)
+  company      Company              @relation(fields: [companyId], references: [id], onUpdate: NoAction)
+  user         User                 @relation(fields: [userId], references: [id], onUpdate: NoAction)
+  executions   ReportExecution[]
+  userSettings UserReportSettings[]
+
+  @@map("ReportConfigs")
+}
+
+model ReportExecution {
+  id           String       @id @default(cuid())
+  reportId     String
+  userId       String
+  status       String       @default("RUNNING")
+  startTime    DateTime     @default(now())
+  endTime      DateTime?
+  duration     Int?
+  recordCount  Int?
+  errorMessage String?
+  parameters   String?
+  resultData   String?
+  createdAt    DateTime     @default(now())
+  report       ReportConfig @relation(fields: [reportId], references: [id], onUpdate: NoAction)
+  user         User         @relation(fields: [userId], references: [id], onUpdate: NoAction)
+
+  @@map("ReportExecutions")
+}
+
+model ApiConfig {
+  id                 String   @id @default(cuid())
+  name               String
+  description        String?
+  baseUrl            String
+  version            String   @default("1.0")
+  authenticationType String   @default("BEARER")
+  authUsername       String?
+  authPassword       String?
+  authToken          String?
+  authApiKey         String?
+  authApiKeyHeader   String?
+  defaultHeaders     String?
+  timeout            Int      @default(30000)
+  retryCount         Int      @default(3)
+  isActive           Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@map("ApiConfigs")
+}
+
+model UserReportSettings {
+  id             String       @id @default(cuid())
+  userId         String
+  reportId       String
+  columnSettings String?
+  filterSettings String?
+  pivotSettings  String?
+  viewType       String       @default("GRID")
+  isActive       Boolean      @default(true)
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  report         ReportConfig @relation(fields: [reportId], references: [id], onUpdate: NoAction)
+  user           User         @relation(fields: [userId], references: [id], onUpdate: NoAction)
+
+  @@unique([userId, reportId])
+  @@map("UserReportSettings")
+}
+
+model UserGridSettings {
+  id                String   @id @default(cuid())
+  userId            String
+  gridType          String
+  columnSettings    String?
+  filterSettings    String?
+  sortSettings      String?
+  groupSettings     String?
+  pivotSettings     String?
+  sidebarSettings   String?
+  viewPreferences   String?
+  themeSettings     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onUpdate: NoAction)
+
+  @@unique([userId, gridType])
+  @@map("UserGridSettings")
+}
