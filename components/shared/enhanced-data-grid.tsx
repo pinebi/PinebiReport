@@ -1534,8 +1534,8 @@ export function EnhancedDataGrid({
           <button className="border px-2 py-1 ml-auto" onClick={() => setOpen(false)}>Kapat</button>
         </div>
         <div style={{ maxHeight: 240, overflowY: 'auto' }}>
-          {values.map((v: any, idx: number) => (
-            <label key={idx} className="flex items-center gap-2 text-sm py-1">
+          {values.map((v: any) => (
+            <label key={`${field}-${String(v)}`} className="flex items-center gap-2 text-sm py-1">
               <input type="checkbox" checked={selected.includes(v)} onChange={() => toggle(v)} />
               <span>{String(v)}</span>
             </label>
