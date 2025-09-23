@@ -72,7 +72,7 @@ const getStaticMenuItems = (): Omit<MenuItem, 'icon'>[] => [
         id: 'report-dashboard',
         label: 'Rapor Dashboard',
         href: '/reports/dashboard'
-        }
+      }
     ]
   },
   {
@@ -145,7 +145,10 @@ export function Sidebar() {
 
         // Load reports
         const reportsResponse = await fetch('/api/report-configs')
-        const reportsData = await reportsResponse.json()
+        let reportsData: any = { reports: [] }
+        if (reportsResponse.ok) {
+          try { reportsData = await reportsResponse.json() } catch {}
+        }
         console.log('Loaded reports:', reportsData.reports?.length || 0)
         
         // Debug: Check showInMenu status

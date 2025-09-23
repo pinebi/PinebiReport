@@ -65,28 +65,28 @@ export default function ReportsPage() {
         categories: categoriesResponse.status
       })
       
-      let reportsData: any = { reports: [] }
+      let reportsData: any | null = null
       if (reportsResponse.ok) {
         try { reportsData = await reportsResponse.json() } catch { reportsData = { reports: [] } }
       } else {
         console.warn('GET /api/report-configs failed:', reportsResponse.status)
       }
 
-      let companiesData: any = { companies: [] }
+      let companiesData: any | null = null
       if (companiesResponse.ok) {
         try { companiesData = await companiesResponse.json() } catch { companiesData = { companies: [] } }
       } else {
         console.warn('GET /api/companies failed:', companiesResponse.status)
       }
 
-      let usersData: any = { users: [] }
+      let usersData: any | null = null
       if (usersResponse.ok) {
         try { usersData = await usersResponse.json() } catch { usersData = { users: [] } }
       } else {
         console.warn('GET /api/users failed:', usersResponse.status)
       }
 
-      let categoriesData: any = { categories: [] }
+      let categoriesData: any | null = null
       if (categoriesResponse.ok) {
         try { categoriesData = await categoriesResponse.json() } catch { categoriesData = { categories: [] } }
       } else {
@@ -96,10 +96,10 @@ export default function ReportsPage() {
       console.log('📋 Reports data:', reportsData)
       console.log('📊 Reports count:', reportsData.reports?.length || 0)
       
-      setReports(reportsData.reports || [])
-      setCompanies(companiesData.companies || [])
-      setUsers(usersData.users || [])
-      setCategories(categoriesData.categories || [])
+      if (reportsData) setReports(reportsData.reports || [])
+      if (companiesData) setCompanies(companiesData.companies || [])
+      if (usersData) setUsers(usersData.users || [])
+      if (categoriesData) setCategories(categoriesData.categories || [])
       
       console.log('✅ Data loaded successfully')
     } catch (error) {
