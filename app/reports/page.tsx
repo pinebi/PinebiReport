@@ -356,6 +356,7 @@ export default function ReportsPage() {
     }
 
     try {
+      console.log('🟦 Report save payload:', reportData)
       let response
       if (editingReport) {
         // Update existing report
@@ -384,7 +385,19 @@ export default function ReportsPage() {
         
         console.log(editingReport ? 'Rapor başarıyla güncellendi!' : 'Rapor başarıyla eklendi!')
       } else {
-        alert('Rapor kaydedilirken hata oluştu')
+        let msg = 'Rapor kaydedilirken hata oluştu'
+        try {
+          const ct = response.headers.get('content-type') || ''
+          if (ct.includes('application/json')) {
+            const j = await response.json()
+            if (j?.error) msg = j.error
+          } else {
+            const t = await response.text()
+            if (t) msg = t
+          }
+        } catch {}
+        console.warn('❌ Report save failed:', response.status, msg)
+        alert(msg)
       }
     } catch (error) {
       console.error('Error saving report:', error)
