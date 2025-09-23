@@ -72,12 +72,7 @@ const getStaticMenuItems = (): Omit<MenuItem, 'icon'>[] => [
         id: 'report-dashboard',
         label: 'Rapor Dashboard',
         href: '/reports/dashboard'
-      },
-      {
-        id: 'report-execution',
-        label: 'Rapor Çalıştır',
-        href: '/reports/run'
-      }
+        }
     ]
   },
   {
@@ -115,7 +110,7 @@ export function Sidebar() {
       case 'reports': return <FileText className="w-5 h-5" />
       case 'report-management': return <Settings className="w-4 h-4" />
       case 'report-dashboard': return <BarChart3 className="w-4 h-4" />
-      case 'report-execution': return <FileText className="w-4 h-4" />
+      // removed 'report-execution'
       case 'categories': return <FolderTree className="w-5 h-5" />
       case 'api-config': return <Settings className="w-5 h-5" />
       case 'data-sources': return <Database className="w-5 h-5" />
@@ -204,8 +199,8 @@ export function Sidebar() {
         const dynamicReportsMenu = {
           ...reportsMenu,
           children: [
-            // Keep original menu items
-            ...(reportsMenu.children || []),
+            // Keep original menu items but exclude 'report-execution'
+            ...((reportsMenu.children || []).filter(c => c.id !== 'report-execution')),
             // Add dynamic category items with reports
             ...reportCategories
               .filter(category => !category.parentId) // Only parent categories
@@ -253,13 +248,7 @@ export function Sidebar() {
         const dynamicReportsMenu = {
           ...reportsMenu,
           children: [
-            // Keep original menu items for REPORTER
-            {
-              id: 'report-execution',
-              label: 'Rapor Çalıştır',
-              icon: getIconForMenuItem('report-execution'),
-              href: '/reports/run'
-            },
+            // Exclude 'report-execution' for REPORTER as well
             // Add dynamic category items with reports
             ...reportCategories
               .filter(category => !category.parentId) // Only parent categories
@@ -310,15 +299,7 @@ export function Sidebar() {
           id: 'reports',
           label: 'Raporlar',
           icon: getIconForMenuItem('reports'),
-          href: '/reports',
-          children: [
-            {
-              id: 'report-execution',
-              label: 'Rapor Çalıştır',
-              icon: getIconForMenuItem('report-execution'),
-              href: '/reports/run'
-            }
-          ]
+          href: '/reports'
         }
       ]
     }
