@@ -31,13 +31,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify hashed password
-    const isValid = await bcrypt.compare(password, user.password)
+    // Verify hashed password; support legacy plaintext migration
+    let isValid = false
+    try {
+      // If it looks like a bcrypt hash, compare
+      const looksHashed = typeof user.password === 'string' && user.password.startsWith('$2')
+      if (looksHashed) {
+        isValid = await bcrypt.compare(password, user.password)
+      } else {
+        // Legacy plaintext stored: compare directly
+        isValid = user.password === password
+        // If matches, migrate to hashed password
+        if (isValid) {
+          const newHash = await bcrypt.hash(password, 10)
+          try { await db.user.update(user.id, { password: newHash }) } catch {}
+        }
+      }
+    } catch {
+      isValid = false
+    }
+
     if (!isValid) {
-      return NextResponse.json(
-        { error: 'Hatalı şifre' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Hatalı şifre' }, { status: 401 })
     }
 
     // Generate simple token (in production, use JWT)
