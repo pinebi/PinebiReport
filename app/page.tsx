@@ -126,24 +126,7 @@ export default function HomePage() {
             </Card>
           </Link>
 
-          <Link href="/reports/run">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-              <CardHeader className="text-center">
-                <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                  <Play className="w-8 h-8 text-green-600" />
-                </div>
-                <CardTitle className="text-xl">Rapor Çalıştırma</CardTitle>
-                <CardDescription>
-                  Tanımlı raporları çalıştır ve sonuçları görüntüle
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full" variant="outline">
-                  Rapor Çalıştır
-                </Button>
-              </CardContent>
-            </Card>
-          </Link>
+          {/* Rapor Çalıştırma kartı kaldırıldı */}
 
           <Link href="/api-config">
             <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
