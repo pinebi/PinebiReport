@@ -53,12 +53,15 @@ npm install
 ```
 
 2. Ortam değişkenlerini ayarlayın:
-`.env.local` dosyası oluşturun:
+`.env.local` dosyası oluşturun (örnek değerler, gerçek bilgilerinizi girin):
 ```env
-DATABASE_URL="sqlserver://185.210.92.248:1433;database=PinebiWebReport;user=EDonusum;password=150399AA-DB5B-47D9-BF31-69EB984CB5DF;trustServerCertificate=true;encrypt=true"
-NEXTAUTH_SECRET="your-secret-key-here"
+# SQL Server bağlantısı (örnek)
+DATABASE_URL="sqlserver://<host>:<port>;database=<dbname>;user=<user>;password=<password>;trustServerCertificate=true;encrypt=true"
+
+# NextAuth / JWT gizli anahtarlar
+NEXTAUTH_SECRET="replace-with-strong-random-secret"
 NEXTAUTH_URL="http://localhost:3000"
-JWT_SECRET="your-jwt-secret-key-here"
+JWT_SECRET="replace-with-strong-random-secret"
 ```
 
 3. Veritabanını hazırlayın:
