@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/database'
+import bcrypt from 'bcryptjs'
 
 export async function GET() {
   try {
@@ -26,12 +27,14 @@ export async function POST(request: NextRequest) {
       'reporter': 'REPORTER'
     }
     
+    const hashedPassword = data.password ? await bcrypt.hash(data.password, 10) : await bcrypt.hash('defaultpass', 10)
+
     const user = await db.user.create({
       username: data.username,
       email: data.email,
       firstName: data.firstName,
       lastName: data.lastName,
-      password: data.password || 'defaultpass', // In production, hash this
+      password: hashedPassword,
       companyId: data.companyId,
       role: roleMap[data.role] || 'USER',
       isActive: data.isActive !== undefined ? data.isActive : true

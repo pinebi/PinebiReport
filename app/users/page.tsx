@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { EnhancedDataGrid } from '@/components/shared/enhanced-data-grid'
+import { EnhancedDataGrid } from '@/components/shared/enhanced-data-grid'Pinebi Report
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -161,6 +161,26 @@ export default function UsersPage() {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     
+    const password = (formData.get('password') as string) || ''
+    const confirmPassword = (formData.get('confirmPassword') as string) || ''
+
+    // For create: require password and confirm match. For edit: optional but must match when provided
+    if (!editingUser) {
+      if (!password) {
+        alert('Lütfen şifre giriniz')
+        return
+      }
+      if (password !== confirmPassword) {
+        alert('Şifreler eşleşmiyor')
+        return
+      }
+    } else {
+      if ((password || confirmPassword) && password !== confirmPassword) {
+        alert('Şifreler eşleşmiyor')
+        return
+      }
+    }
+
     const userData = {
       username: formData.get('username') as string,
       email: formData.get('email') as string,
@@ -169,12 +189,13 @@ export default function UsersPage() {
       companyId: formData.get('companyId') as string,
       role: formData.get('role') as 'ADMIN' | 'REPORTER',
       isActive: formData.get('isActive') === 'true',
+      ...(password ? { password } : {})
     }
 
     try {
       let response
-    if (editingUser) {
-      // Update existing user
+      if (editingUser) {
+        // Update existing user
         response = await fetch(`/api/users/${editingUser.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
@@ -193,7 +214,7 @@ export default function UsersPage() {
         loadData() // Reload data
         setShowForm(false)
         setEditingUser(null)
-    } else {
+      } else {
         alert('Kullanıcı kaydedilirken hata oluştu')
       }
     } catch (error) {
@@ -262,6 +283,26 @@ export default function UsersPage() {
                   required 
                   defaultValue={editingUser?.email || ''}
                 />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="password">Şifre {editingUser ? '(opsiyonel)' : '*'}</Label>
+                  <Input 
+                    id="password" 
+                    name="password" 
+                    type="password" 
+                    placeholder={editingUser ? 'Boş bırakılırsa değişmez' : ''}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="confirmPassword">Şifre (Tekrar) {editingUser ? '(opsiyonel)' : '*'}</Label>
+                  <Input 
+                    id="confirmPassword" 
+                    name="confirmPassword" 
+                    type="password" 
+                  />
+                </div>
               </div>
               
               <div>
