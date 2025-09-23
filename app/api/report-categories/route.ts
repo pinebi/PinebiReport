@@ -1,35 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/database'
+import { db } from '@/lib/database'
 
 export async function GET() {
   try {
     console.log('🔄 Fetching report categories...')
     
-    // Use real categories from reports
-    const categories = [
-      {
-        id: 'cat-satis',
-        name: 'Satış Raporları',
-        description: 'Satış performansı ve analiz raporları',
-        icon: '📊',
-        color: '#3B82F6',
-        sortOrder: 1,
-        isActive: true,
-        parentId: null
-      },
-      {
-        id: 'cat-finansal',
-        name: 'Finansal Raporlar',
-        description: 'Muhasebe ve finansal analiz raporları',
-        icon: '💰',
-        color: '#8B5CF6',
-        sortOrder: 2,
-        isActive: true,
-        parentId: null
-      }
-    ]
+    let categories: any[] = []
+    try {
+      categories = await db.reportCategory.findAll()
+    } catch (e) {
+      console.warn('⚠️ DB categories fetch failed, falling back to mock:', (e as any)?.message)
+    }
     
-    console.log('📊 Returning mock categories:', categories.length)
+    if (!categories || categories.length === 0) {
+      // Fallback mock categories
+      categories = [
+        {
+          id: 'cat-satis',
+          name: 'Satış Raporları',
+          description: 'Satış performansı ve analiz raporları',
+          icon: '📊',
+          color: '#3B82F6',
+          sortOrder: 1,
+          isActive: true,
+          parentId: null
+        },
+        {
+          id: 'cat-finansal',
+          name: 'Finansal Raporlar',
+          description: 'Muhasebe ve finansal analiz raporları',
+          icon: '💰',
+          color: '#8B5CF6',
+          sortOrder: 2,
+          isActive: true,
+          parentId: null
+        }
+      ]
+    }
+
+    console.log('📊 Returning categories:', categories.length)
     
     return NextResponse.json({ categories }, {
       headers: {
