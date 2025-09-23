@@ -1682,10 +1682,9 @@ export function EnhancedDataGrid({
                 size="sm"
                 onClick={saveGridSettingsSQL}
                 title="Firma+Kullanıcı Bazlı SQL Kaydet"
-                className="bg-amber-50 border-amber-200 hover:bg-amber-100 flex items-center gap-1"
+                className="bg-amber-50 border-amber-200 hover:bg-amber-100"
               >
                 <Save className="w-4 h-4" />
-                <span>SQL Kaydet</span>
               </Button>
             </div>
 
