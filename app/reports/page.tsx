@@ -48,10 +48,33 @@ export default function ReportsPage() {
         categories: categoriesResponse.status
       })
       
-      const reportsData = await reportsResponse.json()
-      const companiesData = await companiesResponse.json()
-      const usersData = await usersResponse.json()
-      const categoriesData = await categoriesResponse.json()
+      let reportsData: any = { reports: [] }
+      if (reportsResponse.ok) {
+        try { reportsData = await reportsResponse.json() } catch { reportsData = { reports: [] } }
+      } else {
+        console.warn('GET /api/report-configs failed:', reportsResponse.status)
+      }
+
+      let companiesData: any = { companies: [] }
+      if (companiesResponse.ok) {
+        try { companiesData = await companiesResponse.json() } catch { companiesData = { companies: [] } }
+      } else {
+        console.warn('GET /api/companies failed:', companiesResponse.status)
+      }
+
+      let usersData: any = { users: [] }
+      if (usersResponse.ok) {
+        try { usersData = await usersResponse.json() } catch { usersData = { users: [] } }
+      } else {
+        console.warn('GET /api/users failed:', usersResponse.status)
+      }
+
+      let categoriesData: any = { categories: [] }
+      if (categoriesResponse.ok) {
+        try { categoriesData = await categoriesResponse.json() } catch { categoriesData = { categories: [] } }
+      } else {
+        console.warn('GET /api/report-categories failed:', categoriesResponse.status)
+      }
       
       console.log('📋 Reports data:', reportsData)
       console.log('📊 Reports count:', reportsData.reports?.length || 0)
