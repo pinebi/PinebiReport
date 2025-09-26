@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     if (body.action === 'get' && body.ids) {
       const ids = Array.isArray(body.ids) ? body.ids : [body.ids]
       const rows = await invoiceFlags.findByIds(ids)
-      const processedIds = rows.filter(row => row.isProcessed === true).map(row => row.recordId).filter(Boolean)
+      const processedIds = rows.filter((row: any) => row.isProcessed === true).map((row: any) => row.recordId).filter(Boolean)
       return NextResponse.json({ success: true, processedIds })
     }
     

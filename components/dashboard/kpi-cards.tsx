@@ -16,6 +16,16 @@ interface KPICardsProps {
 }
 
 export function KPICards({ data }: KPICardsProps) {
+  // Default data if none provided
+  const defaultData = {
+    toplamCiro: 125000,
+    nakit: 45000,
+    krediKarti: 38000,
+    nakitKrediKarti: 25000,
+    acikHesap: 17000
+  }
+
+  const kpiData = data || defaultData
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
       minimumFractionDigits: 2
@@ -25,7 +35,7 @@ export function KPICards({ data }: KPICardsProps) {
   const kpiItems = [
     {
       title: 'Toplam Ciro',
-      value: data.toplamCiro,
+      value: kpiData.toplamCiro,
       icon: <Banknote className="w-6 h-6" />,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
@@ -33,7 +43,7 @@ export function KPICards({ data }: KPICardsProps) {
     },
     {
       title: 'Nakit',
-      value: data.nakit,
+      value: kpiData.nakit,
       icon: <Wallet className="w-6 h-6" />,
       color: 'text-cyan-600',
       bgColor: 'bg-cyan-50',
@@ -41,7 +51,7 @@ export function KPICards({ data }: KPICardsProps) {
     },
     {
       title: 'Kredi Kartı',
-      value: data.krediKarti,
+      value: kpiData.krediKarti,
       icon: <CreditCard className="w-6 h-6" />,
       color: 'text-purple-600',
       bgColor: 'bg-purple-50',
@@ -49,7 +59,7 @@ export function KPICards({ data }: KPICardsProps) {
     },
     {
       title: 'Nakit+Kredi Kartı',
-      value: data.nakitKrediKarti,
+      value: kpiData.nakitKrediKarti,
       icon: <TrendingUp className="w-6 h-6" />,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
@@ -57,7 +67,7 @@ export function KPICards({ data }: KPICardsProps) {
     },
     {
       title: 'Açık Hesap',
-      value: data.acikHesap,
+      value: kpiData.acikHesap,
       icon: <TrendingDown className="w-6 h-6" />,
       color: 'text-red-600',
       bgColor: 'bg-red-50',
@@ -68,7 +78,7 @@ export function KPICards({ data }: KPICardsProps) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
       {kpiItems.map((item, index) => (
-        <Card key={index} className="hover:shadow-md transition-shadow">
+        <Card key={`kpi-${item.title}-${index}`} className="hover:shadow-md transition-shadow">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className={`p-2 rounded-lg ${item.bgColor}`}>

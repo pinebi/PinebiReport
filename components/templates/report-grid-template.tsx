@@ -75,7 +75,7 @@ export function ReportGridTemplate({
   }
 
   // Sütun tanımları - İhtiyacınıza göre güncelleyin
-  const columnDefs: ColDef[] = useMemo(() => [
+  const columnDefs: any[] = useMemo(() => [
     {
       field: 'id',
       headerName: 'ID',

@@ -15,7 +15,17 @@ interface TopCustomersProps {
   title?: string
 }
 
-export function TopCustomers({ data, title = "Ürün Satışı Top 10" }: TopCustomersProps) {
+export function TopCustomers({ data = [], title = "Ürün Satışı Top 10" }: TopCustomersProps) {
+  // Default data if none provided
+  const defaultData = [
+    { name: 'ABC Şirketi', amount: 45000, rank: 1, change: 12 },
+    { name: 'XYZ Ltd.', amount: 38000, rank: 2, change: -5 },
+    { name: 'DEF A.Ş.', amount: 32000, rank: 3, change: 8 },
+    { name: 'GHI Holding', amount: 28000, rank: 4, change: 15 },
+    { name: 'JKL Grup', amount: 25000, rank: 5, change: -2 }
+  ]
+
+  const customerData = data && data.length > 0 ? data : defaultData
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
@@ -29,7 +39,7 @@ export function TopCustomers({ data, title = "Ürün Satışı Top 10" }: TopCus
     return Math.max(5, (amount / maxAmount) * 100)
   }
 
-  const maxAmount = Math.max(...data.map(item => item.amount))
+  const maxAmount = Math.max(...customerData.map(item => item.amount))
 
   return (
     <Card>
@@ -38,8 +48,8 @@ export function TopCustomers({ data, title = "Ürün Satışı Top 10" }: TopCus
       </CardHeader>
       <CardContent>
         <div className="space-y-3">
-          {data.map((customer, index) => (
-            <div key={index} className="relative">
+          {customerData.map((customer, index) => (
+            <div key={`customer-${customer.name}-${index}`} className="relative">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">
                   <Badge 
@@ -86,6 +96,10 @@ export function TopCustomers({ data, title = "Ürün Satışı Top 10" }: TopCus
     </Card>
   )
 }
+
+
+
+
 
 
 

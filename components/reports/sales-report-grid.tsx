@@ -29,12 +29,12 @@ export function SalesReportGrid({ data, title = "Satış Raporu" }: SalesReportG
     }).format(params.value)
   }
 
-  const columnDefs: ColDef[] = useMemo(() => [
+  const columnDefs: any[] = useMemo(() => [
     {
       field: 'TarihGun',
       headerName: 'Tarih',
       width: 150,
-      cellStyle: { fontWeight: 'bold' }
+      cellStyle: { fontWeight: 'bold', textAlign: 'left' }
     },
     {
       field: 'AyAdi',

@@ -808,74 +808,85 @@ export function EnhancedDataGrid({
     try {
       console.log('📏 Sütunları içeriğe göre boyutlandırılıyor...')
       
-      // Get all columns
-        const allColumns = gridApi.getColumns?.() || (gridColumnApi?.getAllColumns?.() || [])
-      if (allColumns && allColumns.length > 0) {
-        console.log(`📊 Found ${allColumns.length} columns to resize`)
-        
-        // Method 1: Try AG-Grid's built-in autoSizeColumns
-        if ((gridApi as any).autoSizeColumns) {
-          console.log('🔧 Using gridApi.autoSizeColumns()')
-          ;(gridApi as any).autoSizeColumns()
-        } else if (gridColumnApi && (gridColumnApi as any).autoSizeColumns) {
-          console.log('🔧 Using gridColumnApi.autoSizeColumns()')
-          ;(gridColumnApi as any).autoSizeColumns()
-        } else {
-          console.log('🔧 Using manual column sizing')
-          // Method 2: Manual auto-sizing based on content
-          allColumns.forEach((column: any) => {
-            try {
-            const colDef = column.getColDef ? column.getColDef() : column.colDef
-              const field = colDef.field
-              const headerName = colDef.headerName || field || 'Unknown'
-              
-              if (!field) return
-              
-              // Get sample data to calculate content width
-              const sampleData = data?.slice(0, 20) || [] // Check first 20 rows
-              let maxWidth = headerName.length * 8 + 20 // Start with header width
-              
-              sampleData.forEach(row => {
-                const cellValue = row[field]
-                if (cellValue !== null && cellValue !== undefined) {
-                  const valueStr = String(cellValue)
-                  const valueWidth = valueStr.length * 8 + 20
-                  maxWidth = Math.max(maxWidth, valueWidth)
-                }
-              })
-              
-              // Apply constraints
-              const finalWidth = Math.min(400, Math.max(80, maxWidth))
-              
-              console.log(`📏 Column ${headerName}: content width ${maxWidth}, final width ${finalWidth}`)
-              if (gridApi && !gridApi.isDestroyed?.()) {
-                if (gridApi.setColumnWidth) {
-                  gridApi.setColumnWidth(column, finalWidth)
-                } else if (gridColumnApi?.setColumnWidth) {
-                  gridColumnApi.setColumnWidth(column, finalWidth)
-                }
-              }
-            } catch (columnError) {
-              console.warn('⚠️ Column sizing error:', columnError)
+      // Method 1: Try AG-Grid's built-in autoSizeColumns with all columns
+      if ((gridApi as any).autoSizeColumns) {
+        console.log('🔧 Using gridApi.autoSizeColumns() for all columns')
+        const allColumns = gridApi.getColumns?.() || []
+        if (allColumns && allColumns.length > 0) {
+          console.log(`📊 Found ${allColumns.length} columns to auto-size`)
+          ;(gridApi as any).autoSizeColumns(allColumns)
+          console.log('✅ AG-Grid autoSizeColumns completed!')
+          
+          // Save settings after auto-sizing
+          setTimeout(() => {
+            if (gridApi && !gridApi.isDestroyed?.()) {
+              console.log('💾 Auto-sizing sonrası ayarları kaydediliyor...')
+              saveGridSettings({ silent: true })
             }
-          })
+          }, 300)
+          
+          alert('✅ Sütunlar yazıya göre boyutlandırıldı!')
+          return
         }
-        
-        console.log('✅ Sütun boyutları yazıya göre ayarlandı!')
-        
-        // Otomatik olarak ayarları kaydet (sessiz)
-        setTimeout(() => {
-          if (gridApi && !gridApi.isDestroyed?.()) {
-          console.log('💾 Sütun boyutlandırma sonrası otomatik kaydetme...')
-            saveGridSettings({ silent: true })
-          }
-        }, 500)
-        
-        alert('✅ Sütunlar yazıya göre boyutlandırıldı ve kaydedildi!')
-      } else {
+      }
+
+      // Method 2: Manual auto-sizing based on content
+      console.log('🔧 Using manual column sizing')
+      const allColumns = gridApi.getColumns?.() || []
+      if (allColumns && allColumns.length === 0) {
         console.log('❌ Hiç sütun bulunamadı')
         alert('❌ Boyutlandırılacak sütun bulunamadı!')
+        return
       }
+
+      console.log(`📊 Found ${allColumns.length} columns to resize manually`)
+      
+      allColumns.forEach((column: any, index: number) => {
+        try {
+          const colDef = column.getColDef ? column.getColDef() : column.colDef
+          const field = colDef.field
+          const headerName = colDef.headerName || field || `Column ${index + 1}`
+          
+          if (!field) return
+          
+          // Get sample data to calculate content width
+          const sampleData = data?.slice(0, 50) || [] // Check first 50 rows
+          let maxWidth = headerName.length * 9 + 30 // Start with header width
+          
+          sampleData.forEach(row => {
+            const cellValue = row[field]
+            if (cellValue !== null && cellValue !== undefined) {
+              const valueStr = String(cellValue)
+              const valueWidth = valueStr.length * 9 + 30
+              maxWidth = Math.max(maxWidth, valueWidth)
+            }
+          })
+          
+          // Apply constraints
+          const finalWidth = Math.min(500, Math.max(100, maxWidth))
+          
+          console.log(`📏 Column ${headerName}: content width ${maxWidth}, final width ${finalWidth}`)
+          
+          // Use gridApi.setColumnWidth with column ID
+          if (gridApi && !gridApi.isDestroyed?.()) {
+            gridApi.setColumnWidth(field, finalWidth)
+          }
+        } catch (columnError) {
+          console.warn(`⚠️ Column ${index} sizing error:`, columnError)
+        }
+      })
+      
+      console.log('✅ Manual column sizing completed!')
+      
+      // Save settings after manual sizing
+      setTimeout(() => {
+        if (gridApi && !gridApi.isDestroyed?.()) {
+          console.log('💾 Manual sizing sonrası ayarları kaydediliyor...')
+          saveGridSettings({ silent: true })
+        }
+      }, 300)
+      
+      alert('✅ Sütunlar yazıya göre boyutlandırıldı!')
       
     } catch (error) {
       console.error('❌ Sütun boyutlandırma hatası:', error)
@@ -1644,6 +1655,26 @@ export function EnhancedDataGrid({
         <div className="flex justify-between items-center">
           <CardTitle className="text-lg font-semibold">{title}</CardTitle>
           <div className="flex items-center gap-2">
+            {/* Grid ve Pivot Toggle Buttons */}
+            <div className="flex items-center gap-1 mr-2">
+              <Button
+                variant={pivotMode ? 'outline' : 'default'}
+                size="sm"
+                onClick={() => setPivotMode(false)}
+                title="Grid Görünümü"
+              >
+                <Columns className="w-4 h-4" />
+              </Button>
+              <Button
+                variant={pivotMode ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setPivotMode(true)}
+                title="Pivot Görünümü"
+              >
+                <Filter className="w-4 h-4" />
+              </Button>
+            </div>
+            
             <Button
               variant="outline"
               size="sm"
@@ -1747,7 +1778,7 @@ export function EnhancedDataGrid({
         <div 
           className="ag-theme-alpine w-full" 
           style={{ 
-            height: '70vh',
+            height: gridType === 'dashboard-daily-grid' ? 'calc(100vh - 300px)' : '70vh',
             '--ag-odd-row-background-color': themeColors.oddRow,
             '--ag-even-row-background-color': themeColors.evenRow,
             '--ag-row-hover-color': themeColors.hover,

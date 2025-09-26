@@ -49,6 +49,15 @@ export async function POST(request: NextRequest) {
     console.log('Making external API call to:', targetUrl)
     console.log('With headers:', externalHeaders)
     console.log('Request body:', body)
+    console.log('Request body JSON string:', JSON.stringify(body))
+    console.log('Request body keys:', Object.keys(body || {}))
+    console.log('Request body values:', Object.values(body || {}))
+    console.log('Request body entries:', Object.entries(body || {}))
+    console.log('🔍 Checking for @firma parameter:', body && body['@firma'])
+    console.log('🔍 Checking for firma parameter:', body && body['firma'])
+    console.log('🔍 All body parameters:', body)
+    console.log('🔍 Body type:', typeof body)
+    console.log('🔍 Body stringified:', JSON.stringify(body, null, 2))
     
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
@@ -73,7 +82,7 @@ export async function POST(request: NextRequest) {
     const responseText = await response.text()
     
     console.log('Response content-type:', contentType)
-    console.log('Response text:', responseText.substring(0, 500)) // First 500 chars
+    console.log('Response text (full):', responseText)
     
     if (contentType && contentType.includes('application/json')) {
       try {

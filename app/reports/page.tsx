@@ -12,8 +12,10 @@ import { ReportConfig, Company, User, ReportCategory } from '@/types'
 import { API_CONFIG } from '@/lib/constants'
 import { ColDef } from 'ag-grid-community'
 import Link from 'next/link'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function ReportsPage() {
+  const { user } = useAuth()
   const [reports, setReports] = useState<ReportConfig[]>([])
   const [companies, setCompanies] = useState<Company[]>([])
   const [users, setUsers] = useState<User[]>([])
@@ -26,8 +28,10 @@ export default function ReportsPage() {
 
   // Load data from API
   useEffect(() => {
-    loadData()
-  }, [])
+    if (user) {
+      loadData()
+    }
+  }, [user])
 
   // Ensure reference data exists when form opens (for edit/create)
   useEffect(() => {
@@ -96,7 +100,21 @@ export default function ReportsPage() {
       console.log('📋 Reports data:', reportsData)
       console.log('📊 Reports count:', reportsData.reports?.length || 0)
       
-      if (reportsData) setReports(reportsData.reports || [])
+      // Filter reports based on user role and company
+      let filteredReports = reportsData?.reports || []
+      
+      if (user?.role !== 'ADMIN') {
+        // Non-admin users can only see active reports from their company
+        filteredReports = filteredReports.filter((report: ReportConfig) => 
+          report.isActive && user?.companyId && report.companyId && user.companyId === report.companyId
+        )
+        console.log(`🔍 Filtered reports for user ${user?.username} (${user?.role}):`, filteredReports.length)
+      } else {
+        // Admin users see all reports (including inactive ones for management)
+        console.log(`👑 Admin user sees all reports:`, filteredReports.length)
+      }
+      
+      setReports(filteredReports)
       if (companiesData) setCompanies(companiesData.companies || [])
       if (usersData) setUsers(usersData.users || [])
       if (categoriesData) setCategories(categoriesData.categories || [])
@@ -364,6 +382,7 @@ export default function ReportsPage() {
       apiUsername: API_CONFIG.DEFAULT_API_USERNAME, // Sabit API kullanıcı adı
       apiPassword: API_CONFIG.DEFAULT_API_PASSWORD, // Sabit API şifresi
       headers: JSON.stringify(headersObject),
+      parameters: formData.get('parameters') as string || null,
       categoryId: formData.get('categoryId') as string,
       companyId: formData.get('companyId') as string,
       // Backward compatibility: primary user is first selected
@@ -519,6 +538,21 @@ export default function ReportsPage() {
                 />
                 <p className="text-sm text-gray-500 mt-1">
                   Rapor endpoint URL'sini buraya girin (@ olmadan) (örn: http://31.145.34.232:8190/REST.CIRO.RAPOR.TARIH.URUNDETAYLI)
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="parameters">Rapor Parametreleri (JSON)</Label>
+                <textarea 
+                  id="parameters"
+                  name="parameters"
+                  rows={6}
+                  placeholder='{"USER": {"required": true, "type": "object", "description": "Kullanıcı bilgileri"}, "START_DATE": {"required": true, "type": "string", "format": "YYYY-MM-DD", "description": "Başlangıç tarihi"}, "END_DATE": {"required": true, "type": "string", "format": "YYYY-MM-DD", "description": "Bitiş tarihi"}}'
+                  defaultValue={editingReport?.parameters || ''}
+                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Raporun ihtiyaç duyduğu parametreleri JSON formatında tanımlayın. Her parametre için type, required, description gibi özellikler belirtebilirsiniz.
                 </p>
               </div>
               

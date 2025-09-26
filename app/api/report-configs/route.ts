@@ -6,10 +6,13 @@ export async function GET(request: NextRequest) {
     console.log('=== API GET /api/report-configs ===')
     const { searchParams } = new URL(request.url)
     const categoryId = searchParams.get('categoryId')
+    const companyId = searchParams.get('companyId')
+    const userId = searchParams.get('userId')
+    const userRole = searchParams.get('userRole')
     
-    console.log('Category ID:', categoryId)
+    console.log('Query params:', { categoryId, companyId, userId, userRole })
     
-    let reports
+    let reports: any[]
     if (categoryId) {
       console.log('Fetching reports by category...')
       
@@ -32,6 +35,8 @@ export async function GET(request: NextRequest) {
           companyId: 'company-1',
           userId: 'user-1',
           isActive: true,
+          menuGroup: 'A',
+          menuOrder: 1,
           createdAt: new Date(),
           updatedAt: new Date(),
           category: { id: categoryId, name: categoryName }
@@ -48,6 +53,8 @@ export async function GET(request: NextRequest) {
           companyId: 'company-1',
           userId: 'user-1',
           isActive: true,
+          menuGroup: 'B',
+          menuOrder: 2,
           createdAt: new Date(),
           updatedAt: new Date(),
           category: { id: categoryId, name: categoryName }
@@ -57,9 +64,14 @@ export async function GET(request: NextRequest) {
     } else {
       console.log('Fetching all reports...')
       try {
-        reports = await db.reportConfig.findAll()
+        if (companyId && userId && userRole) {
+          console.log('🔍 Filtering reports by company and user...')
+          reports = await db.reportConfig.findByCompanyAndUser(companyId, userId, userRole)
+        } else {
+          reports = await db.reportConfig.findAll()
+        }
       } catch (error) {
-        console.warn('Database fetch failed, using mock data:', error.message)
+        console.warn('Database fetch failed, using mock data:', error instanceof Error ? error.message : String(error))
         reports = []
       }
     }
@@ -124,9 +136,9 @@ export async function POST(request: NextRequest) {
         if (mockName) {
           try {
             const allCats = await db.reportCategory.findAll()
-            const found = allCats.find((c: any) => c.name === mockName)
+            const found = allCats.find((c: any) => c.name === mockName) 
             if (found) {
-              cat = found
+              cat = { ...found, reports: [] }
               data.categoryId = found.id
             }
           } catch {}

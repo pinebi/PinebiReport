@@ -16,11 +16,16 @@ import {
   Home,
   FolderTree,
   Database,
-  LogOut
+  LogOut,
+  Package,
+  List,
+  Folder,
+  Calendar
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { clsx } from 'clsx'
 import { ReportCategory } from '@/types'
+import { ThemeSelector } from '@/components/theme/ThemeSelector'
 
 interface MenuItem {
   id: string
@@ -54,9 +59,36 @@ const getStaticMenuItems = (): Omit<MenuItem, 'icon'>[] => [
     href: '/companies'
   },
   {
+    id: 'products',
+    label: 'Ürünler',
+    href: '/products',
+    children: [
+      {
+        id: 'products-list',
+        label: 'Ürün Listesi',
+        href: '/products'
+      },
+      {
+        id: 'products-categories',
+        label: 'Kategoriler',
+        href: '/products/categories'
+      },
+      {
+        id: 'products-form-builder',
+        label: 'Form Oluşturucu',
+        href: '/products/form-builder'
+      }
+    ]
+  },
+  {
     id: 'users',
     label: 'Kullanıcı Yönetimi',
     href: '/users'
+  },
+  {
+    id: 'calendar',
+    label: 'Takvim ve Hatırlatmalar',
+    href: '/calendar'
   },
   {
     id: 'reports',
@@ -66,12 +98,14 @@ const getStaticMenuItems = (): Omit<MenuItem, 'icon'>[] => [
       {
         id: 'report-management',
         label: 'Rapor Yönetimi',
-        href: '/reports'
+        href: '/reports',
+        icon: '📊'
       },
       {
         id: 'report-dashboard',
         label: 'Rapor Dashboard',
-        href: '/reports/dashboard'
+        href: '/reports/dashboard',
+        icon: '📈'
       }
     ]
   },
@@ -99,14 +133,19 @@ export function Sidebar() {
   const [reportCategories, setReportCategories] = useState<ReportCategory[]>([])
   const [reports, setReports] = useState<ReportWithCategory[]>([])
   const pathname = usePathname()
-  const { user, logout, hasPermission } = useAuth()
+  const { user, logout } = useAuth()
 
   // Helper function to get icon for menu item
   const getIconForMenuItem = (itemId: string) => {
     switch (itemId) {
       case 'dashboard': return <Home className="w-5 h-5" />
       case 'companies': return <Building2 className="w-5 h-5" />
+      case 'products': return <Package className="w-5 h-5" />
+      case 'products-list': return <List className="w-5 h-5" />
+      case 'products-categories': return <Folder className="w-5 h-5" />
+      case 'products-form-builder': return <Settings className="w-5 h-5" />
       case 'users': return <Users className="w-5 h-5" />
+      case 'calendar': return <Calendar className="w-5 h-5" />
       case 'reports': return <FileText className="w-5 h-5" />
       case 'report-management': return <Settings className="w-4 h-4" />
       case 'report-dashboard': return <BarChart3 className="w-4 h-4" />
@@ -152,12 +191,12 @@ export function Sidebar() {
         
         // Auto-expand categories when loaded
         const categoryIds = (categoriesData.categories || [])
-          .filter(cat => !cat.parentId) // Only parent categories
-          .map(cat => `category-${cat.id}`)
+          .filter((cat: any) => !cat.parentId) // Only parent categories       
+          .map((cat: any) => `category-${cat.id}`)
         
         if (categoryIds.length > 0) {
           setExpandedItems(prev => {
-            const newExpanded = [...prev, ...categoryIds.filter(id => !prev.includes(id))]
+            const newExpanded = [...prev, ...categoryIds.filter((id: string) => !prev.includes(id))]
             console.log('🔍 Auto-expanding categories:', categoryIds)
             return newExpanded
           })
@@ -166,6 +205,7 @@ export function Sidebar() {
         // Load reports with retry + cache
         const reportsData = await fetchWithRetry('/api/report-configs', 'cache-report-configs') || { reports: [] }
         console.log('Loaded reports:', reportsData.reports?.length || 0)
+        console.log('Current user:', user?.username, 'Role:', user?.role, 'Company ID:', user?.companyId)
         
         // Debug: Check showInMenu status
         const reportsWithMenuStatus = reportsData.reports?.map((report: any) => {
@@ -226,13 +266,29 @@ export function Sidebar() {
               .map(category => {
                 // Get reports for this category and its children
                 const categoryReports = reports.filter(report => {
-                  // Only show reports that are marked to show in menu
-                  if (report.showInMenu !== true) return false
+                  // Only show active reports that are marked to show in menu
+                  if (!report.isActive || report.showInMenu !== true) return false
                   
-                  // Match reports by category name (exact match)
-                  if (report.category?.name === category.name) return true
+                  // Check if report belongs to current category
+                  if (report.categoryId !== category.id) return false
+                  
+                  // Admin can see all reports (no company filtering)
+                  if (user?.role === 'ADMIN') {
+                    return true
+                  }
+                  
+                  // Regular users can only see reports from their company
+                  if (user?.companyId && report.companyId && user.companyId === report.companyId) {
+                    return true
+                  }
                   
                   return false
+                }).sort((a, b) => {
+                  // Sort by menuOrder first, then by name
+                  const orderA = a.menuOrder || 0
+                  const orderB = b.menuOrder || 0
+                  if (orderA !== orderB) return orderA - orderB
+                  return a.name.localeCompare(b.name)
                 })
                 
                 console.log(`📊 Category ${category.name} has ${categoryReports.length} reports:`, categoryReports.map(r => r.name))
@@ -274,20 +330,29 @@ export function Sidebar() {
               .map(category => {
                 // Get reports for this category and its children
                 const categoryReports = reports.filter(report => {
-                  // Only show reports that are marked to show in menu
-                  if (report.showInMenu !== true) return false
+                  // Only show active reports that are marked to show in menu
+                  if (!report.isActive || report.showInMenu !== true) return false
                   
-                  // Direct reports to this category (by ID match)
-                  if (report.categoryId === category.id) return true
+                  // Check if report belongs to current category
+                  if (report.categoryId !== category.id) return false
                   
-                  // Also match by category name if available
-                  if (report.category?.name === category.name) return true
+                  // Admin can see all reports (no company filtering)
+                  if (user?.role === 'ADMIN') {
+                    return true
+                  }
                   
-                  // Reports to child categories
-                  const childCategory = reportCategories.find(child => 
-                    child.id === report.categoryId && child.parentId === category.id
-                  )
-                  return !!childCategory
+                  // Regular users can only see reports from their company
+                  if (user?.companyId && report.companyId && user.companyId === report.companyId) {
+                    return true
+                  }
+                  
+                  return false
+                }).sort((a, b) => {
+                  // Sort by menuOrder first, then by name
+                  const orderA = a.menuOrder || 0
+                  const orderB = b.menuOrder || 0
+                  if (orderA !== orderB) return orderA - orderB
+                  return a.name.localeCompare(b.name)
                 })
                 
                 console.log(`📊 Category ${category.name} (ID: ${category.id}) has ${categoryReports.length} reports:`, categoryReports.map(r => `${r.name} (catId: ${r.categoryId})`))
@@ -339,7 +404,7 @@ export function Sidebar() {
           {hasChildren ? (
             <div
               className={clsx(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer',
+                'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer',
                 'hover:bg-gray-100 dark:hover:bg-gray-800',
                 isActive && 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300',
                 !isActive && 'text-gray-700 dark:text-gray-300',
@@ -369,7 +434,7 @@ export function Sidebar() {
             <Link
               href={item.href}
               className={clsx(
-                'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                'flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors',
                 'hover:bg-gray-100 dark:hover:bg-gray-800',
                 isActive && 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300',
                 !isActive && 'text-gray-700 dark:text-gray-300',
@@ -408,7 +473,7 @@ export function Sidebar() {
   const filteredMenuItems = getFilteredMenuItems().map(item => ({
     ...item,
     icon: getIconForMenuItem(item.id),
-    children: item.children?.map(child => ({
+    children: (item as any).children?.map((child: any) => ({
       ...child,
       icon: getIconForMenuItem(child.id)
     }))
@@ -469,6 +534,21 @@ export function Sidebar() {
           </div>
         ))}
       </nav>
+
+      {/* Theme Selector */}
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+        <div className={clsx(
+          'flex items-center gap-2',
+          isCollapsed && 'justify-center'
+        )}>
+          {!isCollapsed && (
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              Tema:
+            </span>
+          )}
+          <ThemeSelector />
+        </div>
+      </div>
 
       {/* Logout Button */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">

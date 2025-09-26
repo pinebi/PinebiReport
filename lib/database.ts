@@ -177,11 +177,6 @@ export const db = {
       include: { company: true }
     }),
     
-    findByUsername: (username: string) => prisma.user.findUnique({
-      where: { username },
-      include: { company: true }
-    }),
-    
     create: (data: any) => prisma.user.create({
       data,
       include: { company: true }
@@ -236,6 +231,39 @@ export const db = {
           include: { category: true, company: true, user: true },
           orderBy: { name: 'asc' }
         }),
+
+        findByCompanyAndUser: (companyId: string, userId: string, userRole: string) => {
+          if (userRole === 'ADMIN') {
+            // Admin can see all reports (no company filtering)
+            return prisma.reportConfig.findMany({
+              where: { 
+                isActive: true,
+                showInMenu: true
+              },
+              include: { category: true, company: true, user: true },
+              orderBy: [
+                { menuGroup: 'asc' },
+                { menuOrder: 'asc' },
+                { name: 'asc' }
+              ]
+            })
+          } else {
+            // Regular users can only see reports from their company
+            return prisma.reportConfig.findMany({
+              where: { 
+                isActive: true,
+                companyId: companyId,
+                showInMenu: true
+              },
+              include: { category: true, company: true, user: true },
+              orderBy: [
+                { menuGroup: 'asc' },
+                { menuOrder: 'asc' },
+                { name: 'asc' }
+              ]
+            })
+          }
+        },
         
         findByCategory: (categoryId: string) => prisma.reportConfig.findMany({
           where: { 
@@ -351,6 +379,46 @@ export const db = {
           userId,
           gridType
         }
+      }
+    })
+  },
+
+  // User Theme operations
+  userTheme: {
+    findByUserId: (userId: string) => prisma.userTheme.findUnique({
+      where: { userId }
+    }),
+    
+    upsert: (userId: string, themeData: any) => prisma.userTheme.upsert({
+      where: { userId },
+      update: {
+        ...themeData,
+        updatedAt: new Date()
+      },
+      create: {
+        userId,
+        ...themeData
+      }
+    }),
+    
+    delete: (userId: string) => prisma.userTheme.delete({
+      where: { userId }
+    }),
+    
+    createDefault: (userId: string) => prisma.userTheme.create({
+      data: {
+        userId,
+        themeName: 'light',
+        primaryColor: '#3b82f6',
+        secondaryColor: '#64748b',
+        accentColor: '#f59e0b',
+        backgroundColor: '#ffffff',
+        textColor: '#1f2937',
+        sidebarColor: '#f8fafc',
+        borderRadius: '0.5rem',
+        fontSize: '14px',
+        fontFamily: 'Inter',
+        darkMode: false
       }
     })
   }

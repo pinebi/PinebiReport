@@ -31,7 +31,20 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null
 }
 
-export function DailySalesChart({ data, title = "Ciro (₺) Günlük" }: DailySalesChartProps) {
+export function DailySalesChart({ data = [], title = "Ciro (₺) Günlük" }: DailySalesChartProps) {
+  // Default data if none provided
+  const defaultData = [
+    { date: '2024-01-01', amount: 12000, formattedDate: '1 Ocak' },
+    { date: '2024-01-02', amount: 15000, formattedDate: '2 Ocak' },
+    { date: '2024-01-03', amount: 18000, formattedDate: '3 Ocak' },
+    { date: '2024-01-04', amount: 14000, formattedDate: '4 Ocak' },
+    { date: '2024-01-05', amount: 16000, formattedDate: '5 Ocak' },
+    { date: '2024-01-06', amount: 19000, formattedDate: '6 Ocak' },
+    { date: '2024-01-07', amount: 22000, formattedDate: '7 Ocak' }
+  ]
+
+  const chartData = data && data.length > 0 ? data : defaultData
+
   return (
     <Card>
       <CardHeader>
@@ -40,7 +53,7 @@ export function DailySalesChart({ data, title = "Ciro (₺) Günlük" }: DailySa
       <CardContent>
         <div className="h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
               <XAxis 
                 dataKey="formattedDate" 
@@ -67,6 +80,12 @@ export function DailySalesChart({ data, title = "Ciro (₺) Günlük" }: DailySa
     </Card>
   )
 }
+
+
+
+
+
+
 
 
 

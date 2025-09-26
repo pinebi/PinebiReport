@@ -7,6 +7,7 @@ import { PaymentDistributionChart } from './payment-distribution-chart'
 import { DailySalesChart } from './daily-sales-chart'
 import { TopCustomers } from './top-customers'
 import { DailyGrid } from './daily-grid'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface DashboardData {
   kpiData: {
@@ -34,7 +35,8 @@ interface DashboardData {
   dailyGrid: any[]
 }
 
-export function MainDashboard() {
+function MainDashboard() {
+  const { user } = useAuth()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [startDate, setStartDate] = useState(() => {
@@ -49,6 +51,33 @@ export function MainDashboard() {
   const fetchDashboardData = async () => {
     setLoading(true)
     try {
+      // Determine API configuration based on user's company
+      let apiConfig = {
+        apiUrl: "http://api.pinebi.com:8191/REST.PROXY",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Basic UElORUJJOnE4MXltQWJ0eDFqSjhob2M4SVBVNzlMalBlbXVYam9rMk5YWVJUYTUx",
+          "url": "http://31.145.34.232:8190/REST.CIRO.RAPOR"
+        },
+        uriString: "REST.CIRO.RAPOR.TARIH.URUNDETAYLI"
+      }
+
+      // Check if user belongs to Belpaş company
+      if (user?.companyId === 'cmfzrh8c6000010jtu3bun80y') {
+        console.log('🏢 Belpaş kullanıcısı - Satış Raporu Belpas API kullanılıyor')
+        apiConfig = {
+          apiUrl: "http://api.pinebi.com:8191/REST.PROXY",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Basic UElORUJJOnE4MXltQWJ0eDFqSjhob2M4SVBVNzlMalBlbXVYam9rMk5YWVJUYTUx", // PINEBI:q81ymAbtx1jJ8hoc8IPU79LjPemuXjok2NXYRTa51
+            "url": "http://78.189.91.186:8190/REST.CIRO.RAPOR"
+          },
+          uriString: "REST.CIRO.RAPOR"
+        }
+      } else {
+        console.log('🏢 RMK kullanıcısı - RMK API kullanılıyor')
+      }
+
       // API call to get dashboard data
       const response = await fetch('/api/reports/run', {
         method: 'POST',
@@ -56,12 +85,8 @@ export function MainDashboard() {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          apiUrl: "http://api.pinebi.com:8191/REST.PROXY",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Basic UElORUJJOnE4MXltQWJ0eDFqSjhob2M4SVBVNzlMalBlbXVYam9rMk5YWVJUYTUx",
-            "url": "http://31.145.34.232:8190/REST.CIRO.RAPOR"
-          },
+          apiUrl: apiConfig.apiUrl,
+          headers: apiConfig.headers,
           method: "POST",
           body: {
             "USER": {
@@ -69,7 +94,7 @@ export function MainDashboard() {
             },
             "START_DATE": startDate,
             "END_DATE": endDate,
-            "uriString": "REST.CIRO.RAPOR.TARIH.URUNDETAYLI"
+            "uriString": apiConfig.uriString
           }
         })
       })
@@ -211,8 +236,10 @@ export function MainDashboard() {
   }
 
   useEffect(() => {
-    fetchDashboardData()
-  }, [])
+    if (user) {
+      fetchDashboardData()
+    }
+  }, [user, startDate, endDate])
 
   if (loading || !data) {
     return (
@@ -252,3 +279,5 @@ export function MainDashboard() {
     </div>
   )
 }
+
+export default MainDashboard

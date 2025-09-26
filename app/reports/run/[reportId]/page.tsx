@@ -36,15 +36,26 @@ export default function RunSpecificReportPage() {
   const reportId = params.reportId as string
   const { user, isLoading: authLoading } = useAuth()
   
-  // Get URL parameters for company, client and dates
+  // Debug log for reportId
+  console.log('🔍 [reportId]/page.tsx - reportId from URL:', reportId)
+  
+  // Get URL parameters for company, client, firm and dates
   const urlCompanyName = searchParams.get('company')
   const urlClientName = searchParams.get('client')
+  const urlFirmId = searchParams.get('firmId')
+  const urlDateFrom = searchParams.get('dateFrom')
+  const urlDateTo = searchParams.get('dateTo')
   const urlDate = searchParams.get('date')
   const urlStartDate = searchParams.get('startDate')
   const urlEndDate = searchParams.get('endDate')
+  const urlFirma = searchParams.get('firma')
+  const urlFirmaAdi = searchParams.get('firmaAdi')
   
   const [report, setReport] = useState<ReportConfig | null>(null)
   const [startDate, setStartDate] = useState(() => {
+    if (urlDateFrom) {
+      return urlDateFrom
+    }
     if (urlStartDate) {
       return urlStartDate
     }
@@ -54,6 +65,9 @@ export default function RunSpecificReportPage() {
     return new Date().toISOString().split('T')[0]
   })
   const [endDate, setEndDate] = useState(() => {
+    if (urlDateTo) {
+      return urlDateTo
+    }
     if (urlEndDate) {
       return urlEndDate
     }
@@ -69,16 +83,29 @@ export default function RunSpecificReportPage() {
   const [error, setError] = useState('')
   const [hasAutoRun, setHasAutoRun] = useState(false)
   
-  // Auto-run report if company/client is provided
+  // Auto-run report if company/client/firmId is provided
   useEffect(() => {
     if (report && startDate && endDate && !loading && !hasAutoRun) {
-      console.log('🚀 Otomatik rapor çalıştırılıyor...')
-      setHasAutoRun(true)
-      setTimeout(() => {
-        runReport()
-      }, 1000)
+      // Check if we have any URL parameters that should trigger auto-run
+      const shouldAutoRun = urlCompanyName || urlClientName || urlFirmId || urlDateFrom || urlDateTo || urlFirma || urlFirmaAdi
+      
+      if (shouldAutoRun) {
+        console.log('🚀 URL parametreleri ile otomatik rapor çalıştırılıyor...', {
+          urlCompanyName,
+          urlClientName,
+          urlFirmId,
+          urlDateFrom,
+          urlDateTo,
+          urlFirma,
+          urlFirmaAdi
+        })
+        setHasAutoRun(true)
+        setTimeout(() => {
+          runReport()
+        }, 1000)
+      }
     }
-  }, [report?.id, startDate, endDate, loading, hasAutoRun])
+  }, [report?.id, startDate, endDate, loading, hasAutoRun, urlCompanyName, urlClientName, urlFirmId, urlDateFrom, urlDateTo, urlFirma, urlFirmaAdi])
 
   // Load report details
   useEffect(() => {
@@ -104,7 +131,11 @@ export default function RunSpecificReportPage() {
         const yesterday = new Date(today)
         yesterday.setDate(today.getDate() - 1)
         
-        setStartDate(yesterday.toISOString().split('T')[0])
+        // Set default date range to last 30 days for better data coverage
+        const thirtyDaysAgo = new Date(today)
+        thirtyDaysAgo.setDate(today.getDate() - 30)
+        
+        setStartDate(thirtyDaysAgo.toISOString().split('T')[0])
         setEndDate(today.toISOString().split('T')[0])
       } catch (error) {
         console.error('Error loading report:', error)
@@ -222,10 +253,20 @@ export default function RunSpecificReportPage() {
           END_DATE: endDate.includes('.') ? 
             endDate.split('.').reverse().join('-') : 
             (endDate.includes('/') ? endDate : new Date(endDate).toISOString().split('T')[0]),
-          ...(urlCompanyName && { FIRMA: urlCompanyName }),
-          ...(urlClientName && { CLIENT: urlClientName })
+          ...(urlCompanyName && { "FIRMA": urlCompanyName }),
+          ...(urlClientName && { "CLIENT": urlClientName }),
+          ...(urlFirmId && { "FIRMA": urlFirmId }),
+          ...(urlFirmaAdi && { "FIRMA": urlFirmaAdi }),
+          ...(urlFirma && { "FIRMA": urlFirma })
         }
       }
+      
+      console.log('🔍 API Request Body:', JSON.stringify(requestBody.body, null, 2))
+      console.log('🔍 urlFirmId:', urlFirmId)
+      console.log('🔍 urlFirmaAdi:', urlFirmaAdi)
+      console.log('🔍 urlFirma:', urlFirma)
+      console.log('🔍 FIRMA parameter:', urlFirma ? { "FIRMA": urlFirma } : urlFirmaAdi ? { "FIRMA": urlFirmaAdi } : 'Not set')
+      console.log('🔍 Date range:', { startDate, endDate })
 
 
       const response = await fetch('/api/reports/run', {
@@ -239,19 +280,77 @@ export default function RunSpecificReportPage() {
       }
 
       const data = await response.json()
+      console.log('🔍 Raw API response:', data)
+      console.log('🔍 API data structure:', JSON.stringify(data, null, 2))
+      console.log('🔍 API data.data:', data.data)
+      console.log('🔍 API data.data type:', typeof data.data)
+      console.log('🔍 API data.data keys:', data.data ? Object.keys(data.data) : 'no data')
+
+      // Mock data disabled - using real API data only
+      console.log('🔍 Using real API data only - mock data disabled')
 
       if (data.success && data.data) {
         let dataArray: ReportData[] = []
         
+        console.log('🔍 Processing data.data:', data.data)
+        
         if (data.data.DATAS && Array.isArray(data.data.DATAS)) {
+          console.log('✅ Found DATAS array with', data.data.DATAS.length, 'items')
           dataArray = data.data.DATAS
+          
+          // Handle empty data case
+          if (dataArray.length === 0) {
+            console.log('⚠️ DATAS array is empty - no data found for the given criteria')
+            const criteriaInfo = {
+              startDate,
+              endDate,
+              urlCompanyName,
+              urlClientName,
+              urlFirmId,
+              reportName: report.name
+            }
+            console.log('📊 Search criteria:', criteriaInfo)
+            
+            let errorMessage = 'Belirtilen kriterlere uygun veri bulunamadı.\n\n'
+            errorMessage += `📅 Tarih Aralığı: ${startDate} - ${endDate}\n`
+            if (urlCompanyName) errorMessage += `🏢 Firma: ${urlCompanyName}\n`
+            if (urlClientName) errorMessage += `👤 Client: ${urlClientName}\n`
+            if (urlFirmId) errorMessage += `🆔 Firma ID: ${urlFirmId}\n`
+            errorMessage += '\nLütfen tarih aralığını veya filtre kriterlerini kontrol edin.'
+            
+            setError(errorMessage)
+            setLoading(false)
+            return
+          }
         } else if (Array.isArray(data.data)) {
+          console.log('✅ Found direct array with', data.data.length, 'items')
           dataArray = data.data
         } else if (data.data.data && Array.isArray(data.data.data)) {
+          console.log('✅ Found nested data.data array with', data.data.data.length, 'items')
           dataArray = data.data.data
+        } else if (data.data && typeof data.data === 'object') {
+          console.log('🔍 data.data is object, checking for arrays...')
+          console.log('🔍 data.data keys:', Object.keys(data.data))
+          
+          // Check if any property contains an array
+          for (const key of Object.keys(data.data)) {
+            if (Array.isArray(data.data[key])) {
+              console.log(`✅ Found array in key "${key}" with`, data.data[key].length, 'items')
+              dataArray = data.data[key]
+              break
+            }
+          }
+          
+          if (dataArray.length === 0) {
+            console.error('❌ No array found in data.data object:', data.data)
+            throw new Error('Rapor verisi beklenen formatta değil - array bulunamadı.')
+          }
         } else {
+          console.error('❌ Rapor verisi beklenen formatta değil:', data.data)
           throw new Error('Rapor verisi beklenen formatta değil.')
         }
+        
+        console.log('✅ Final dataArray length:', dataArray.length)
 
         // Load invoice flags for specific report
         if (reportId === 'cmfrcllyp00013528a9a1letz') {
@@ -289,6 +388,41 @@ export default function RunSpecificReportPage() {
         width: 150,
       }
 
+      // Add click functionality for FirmaAdi column
+      if (col === 'FirmaAdi' && reportId === 'report_1758920884636_qux9od5v0') {
+        baseColDef.cellStyle = {
+          cursor: 'pointer',
+          color: '#16a34a',
+          fontWeight: '500'
+        }
+        baseColDef.onCellClicked = (params: any) => {
+          console.log('🏢 FirmaAdi tıklandı:', params.value)
+          console.log('🏢 Firma kodu:', params.data.Firma)
+          console.log('🏢 Tarih:', params.data.Tarih)
+          
+          // Navigate to detail report with parameters
+          const queryParams = new URLSearchParams({
+            firma: String(params.data.Firma || ''),
+            firmaAdi: String(params.value || ''),
+            startDate: startDate || new Date().toISOString().split('T')[0],
+            endDate: endDate || new Date().toISOString().split('T')[0]
+          })
+          
+          // Navigate to the detail report
+          const detailReportId = 'report_1758920937032_w1qwxp9zb'
+          const detailReportUrl = `/reports/run/${detailReportId}?${queryParams.toString()}`
+          
+          console.log('🔗 NAVIGATION to Detail Report:', detailReportUrl)
+          
+          // Navigate to detail report
+          try {
+            window.location.replace(detailReportUrl)
+          } catch (error) {
+            console.error('Navigation error:', error)
+          }
+        }
+      }
+      
       // Add click functionality for Firma column
       if (col === 'Firma') {
         baseColDef.cellStyle = {
@@ -297,10 +431,31 @@ export default function RunSpecificReportPage() {
           fontWeight: '500'
         }
         baseColDef.onCellClicked = (params: any) => {
-              console.log('🔍 Firma tıklandı:', params.value)
-          const firmaRaporuId = 'cmfregql400058tljo44h7zz3'
-          const newUrl = `/reports/run/${firmaRaporuId}?company=${encodeURIComponent(params.value)}&startDate=${startDate}&endDate=${endDate}`
-          window.location.href = newUrl
+          console.log('🔍 Firma tıklandı:', params.value)
+          console.log('🔍 Current reportId:', reportId)
+          
+          // Check if this is the correct source report (report_1758924520216_xjcbk3zp0)
+          if (reportId === 'report_1758924520216_xjcbk3zp0') {
+            // Navigate to the correct target report (report_1758924579278_zs522b2ni)
+            const detailReportId = 'report_1758924579278_zs522b2ni'
+            // Use Firma name for this specific report (as requested)
+            const firmaName = params.value
+            const newUrl = `/reports/run/${detailReportId}?firma=${encodeURIComponent(firmaName)}&startDate=${startDate}&endDate=${endDate}`
+            console.log('🔗 Navigating to detail report:', newUrl)
+            console.log('🔗 Using firma name:', firmaName)
+            window.location.href = newUrl
+          } else if (reportId === 'cmfpr3nwz00015bin26gk8r6f') {
+            // Navigate to the correct target report (report_1758838487329_w4aq5diq1)
+            const firmaRaporuId = 'report_1758838487329_w4aq5diq1'
+            const newUrl = `/reports/run/${firmaRaporuId}?firmId=${encodeURIComponent(params.value)}&dateFrom=${startDate}&dateTo=${endDate}`
+            console.log('🔗 Navigating to correct report:', newUrl)
+            window.location.href = newUrl
+          } else {
+            // For other reports, use the old logic
+            const firmaRaporuId = 'cmfregql400058tljo44h7zz3'
+            const newUrl = `/reports/run/${firmaRaporuId}?company=${encodeURIComponent(params.value)}&startDate=${startDate}&endDate=${endDate}`
+            window.location.href = newUrl
+          }
         }
       }
 
@@ -312,11 +467,24 @@ export default function RunSpecificReportPage() {
           fontWeight: '500'
         }
         baseColDef.onCellClicked = (params: any) => {
-              console.log('🔍 CLIENT tıklandı:', params.value)
-          const clientRaporuId = 'cmfrfinje00078tljo8ii3wo8'
-          const firmaName = params.data?.Firma || urlCompanyName || ''
-          const newUrl = `/reports/run/${clientRaporuId}?company=${encodeURIComponent(firmaName)}&client=${encodeURIComponent(params.value)}&startDate=${startDate}&endDate=${endDate}`
-          window.location.href = newUrl
+          console.log('🔍 CLIENT tıklandı:', params.value)
+          console.log('🔍 Current reportId:', reportId)
+          
+          // Check if this is the correct source report (cmfregql400058tljo44h7zz3)
+          if (reportId === 'cmfregql400058tljo44h7zz3') {
+            // Navigate to the correct target report (report_1758828072504_x53g2mth8)
+            const clientRaporuId = 'report_1758828072504_x53g2mth8'
+            const firmaName = params.data?.Firma || urlCompanyName || ''
+            const newUrl = `/reports/run/${clientRaporuId}?company=${encodeURIComponent(firmaName)}&client=${encodeURIComponent(params.value)}&startDate=${startDate}&endDate=${endDate}`
+            console.log('🔗 Navigating to correct CLIENT report:', newUrl)
+            window.location.href = newUrl
+          } else {
+            // For other reports, use the old logic
+            const clientRaporuId = 'cmfrfinje00078tljo8ii3wo8'
+            const firmaName = params.data?.Firma || urlCompanyName || ''
+            const newUrl = `/reports/run/${clientRaporuId}?company=${encodeURIComponent(firmaName)}&client=${encodeURIComponent(params.value)}&startDate=${startDate}&endDate=${endDate}`
+            window.location.href = newUrl
+          }
         }
       }
 
@@ -542,11 +710,6 @@ export default function RunSpecificReportPage() {
                   Rapor Sonuçları
                 </CardTitle>
                 {showResults && (
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Clock className="w-4 h-4" />
-                    <span>Son güncelleme: {new Date().toLocaleString('tr-TR')}</span>
-                  </div>
                   <div className="flex items-center gap-1 text-sm">
                     <Button 
                       variant={resultsView === 'grid' ? 'default' : 'outline'} 
@@ -571,7 +734,6 @@ export default function RunSpecificReportPage() {
                         Tabulator
                       </Button>
                     )}
-                  </div>
                   </div>
                 )}
               </div>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
+  const { login } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -23,6 +25,8 @@ export default function LoginPage() {
     setError('')
 
     try {
+      console.log('Attempting login with:', { username, password: '***' })
+      
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: {
@@ -31,34 +35,42 @@ export default function LoginPage() {
         body: JSON.stringify({ username, password }),
       })
 
-      const data = await response.json()
-
-      if (response.ok) {
-        // Store user data in localStorage
-        localStorage.setItem('user', JSON.stringify(data.user))
-        localStorage.setItem('token', data.token)
-        
-        // Redirect to dashboard
-        router.push('/')
-        router.refresh()
-      } else {
-        setError(data.error || 'Giriş başarısız')
+      console.log('Response status:', response.status)
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Login error response:', errorText)
+        setError(`HTTP ${response.status}: ${errorText}`)
+        return
       }
+
+      const data = await response.json()
+      console.log('Login success:', data)
+
+      // Use AuthContext login function to update state
+      login(data.user, data.token)
+      
+      // Redirect to dashboard
+      router.push('/')
+      router.refresh()
     } catch (error) {
-      setError('Sunucu hatası. Lütfen tekrar deneyin.')
+      console.error('Login error:', error)
+      setError(`Sunucu hatası: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`)
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <LogIn className="h-8 w-8 text-blue-600" />
           </div>
-          <CardTitle className="text-2xl font-bold">Pinebi Report</CardTitle>
+          <CardTitle className="text-2xl font-bold text-gray-900">
+            Pinebi Report
+          </CardTitle>
           <CardDescription>
             Lütfen kullanıcı bilgilerinizi girin
           </CardDescription>
@@ -75,6 +87,7 @@ export default function LoginPage() {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 disabled={isLoading}
+                autoComplete="username"
               />
             </div>
             
@@ -89,6 +102,8 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={isLoading}
+                  autoComplete="current-password"
+                  className="pr-12"
                 />
                 <Button
                   type="button"
@@ -118,16 +133,35 @@ export default function LoginPage() {
               className="w-full" 
               disabled={isLoading}
             >
-              {isLoading ? 'Giriş yapılıyor...' : 'Giriş Yap'}
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Giriş yapılıyor...
+                </div>
+              ) : (
+                'Giriş Yap'
+              )}
             </Button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-gray-600">
-            <p>Demo hesaplar:</p>
-            <p className="font-mono text-xs mt-1">
-              <strong>Admin:</strong> admin / admin<br />
-              <strong>Reporter:</strong> reporter / reporter
-            </p>
+          <div className="mt-6 text-center">
+            <div className="bg-gray-50 rounded-lg p-4 border">
+              <p className="text-sm font-medium text-gray-700 mb-2">Demo Hesaplar</p>
+              <div className="text-xs space-y-1">
+                <p className="font-mono bg-white px-2 py-1 rounded border">
+                  <span className="text-blue-600 font-semibold">Demo Admin:</span> demo-admin / Demo123!
+                </p>
+                <p className="font-mono bg-white px-2 py-1 rounded border">
+                  <span className="text-blue-600 font-semibold">Demo User:</span> demo-user / Demo123!
+                </p>
+                <div className="pt-2 border-t border-gray-200 mt-2">
+                  <p className="text-gray-500 text-xs">Legacy Hesaplar:</p>
+                  <p className="font-mono bg-white px-2 py-1 rounded border mt-1">
+                    admin / admin • reporter / reporter
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

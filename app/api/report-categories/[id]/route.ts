@@ -40,7 +40,7 @@ export async function GET(
   } catch (error) {
     console.error('❌ Category fetch error:', error)
     return NextResponse.json(
-      { error: 'Kategori getirilirken hata oluştu', details: error.message },
+      { error: 'Kategori getirilirken hata oluştu', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     )
   }

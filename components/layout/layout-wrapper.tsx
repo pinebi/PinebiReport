@@ -3,9 +3,9 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { usePathname } from 'next/navigation'
 import { Sidebar } from './sidebar'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, memo } from 'react'
 
-export function LayoutWrapper({ children }: { children: React.ReactNode }) {
+export const LayoutWrapper = memo(function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
   const [pathname, setPathname] = useState('')
   const [mounted, setMounted] = useState(false)
@@ -34,5 +34,5 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
       </main>
     </div>
   )
-}
+})
 

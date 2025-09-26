@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
 
   useEffect(() => {
-    // Check if user is logged in on mount
+    // Immediate auth check for faster loading
     const storedUser = localStorage.getItem('user')
     const storedToken = localStorage.getItem('token')
 
@@ -42,7 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData = JSON.parse(storedUser)
         setUser(userData)
       } catch (error) {
-        console.error('Error parsing stored user:', error)
         localStorage.removeItem('user')
         localStorage.removeItem('token')
       }

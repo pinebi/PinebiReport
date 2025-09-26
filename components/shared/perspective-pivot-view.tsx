@@ -60,7 +60,7 @@ export default function PerspectivePivotView({ data, title = 'Pivot', gridKey }:
     try {
       if (!ready || !viewerRef.current) return
       const viewer = viewerRef.current as any
-      const worker = await (await import('https://cdn.jsdelivr.net/npm/@finos/perspective@2.11.1/dist/esm/perspective.js')).default()
+      const worker = await (await import('https://cdn.jsdelivr.net/npm/@finos/perspective@2.11.1/dist/esm/perspective.js' as any)).default()
       // Create table and load data
       const table = await worker.table(Array.isArray(data) ? data : [])
       await (viewer as any).load(table)
@@ -150,7 +150,7 @@ export default function PerspectivePivotView({ data, title = 'Pivot', gridKey }:
       </CardHeader>
       <CardContent>
         {/* perspective-viewer web component */}
-        <perspective-viewer ref={viewerRef} style={{ height: 600, width: '100%' }} attr-theme="Vaporwave"></perspective-viewer>
+        <div ref={viewerRef} style={{ height: 600, width: '100%' }} data-theme="Vaporwave"></div>
       </CardContent>
     </Card>
   )

@@ -62,7 +62,17 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null
 }
 
-export function PaymentDistributionChart({ data, title = "Ödeme Dağılımı" }: PaymentDistributionChartProps) {
+export function PaymentDistributionChart({ data = [], title = "Ödeme Dağılımı" }: PaymentDistributionChartProps) {
+  // Default data if none provided
+  const defaultData = [
+    { name: 'Nakit', value: 45, color: '#10b981' },
+    { name: 'Kredi Kartı', value: 30, color: '#6b7280' },
+    { name: 'Banka Kartı', value: 20, color: '#ef4444' },
+    { name: 'Diğer', value: 5, color: '#f59e0b' }
+  ]
+
+  const chartData = data && data.length > 0 ? data : defaultData
+
   return (
     <Card>
       <CardHeader>
@@ -73,7 +83,7 @@ export function PaymentDistributionChart({ data, title = "Ödeme Dağılımı" }
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={data}
+                data={chartData}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -84,7 +94,7 @@ export function PaymentDistributionChart({ data, title = "Ödeme Dağılımı" }
                 dataKey="value"
                 stroke="none"
               >
-                {data.map((entry, index) => (
+                {chartData.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
                 ))}
               </Pie>

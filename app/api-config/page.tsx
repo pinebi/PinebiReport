@@ -412,7 +412,7 @@ Content-Type: application/json
                 <Label className="text-base font-semibold">Varsayılan Header'lar</Label>
                 <div className="space-y-2 mt-2">
                   {headers.map((header, index) => (
-                    <div key={index} className="flex gap-2 items-center">
+                    <div key={`header-${index}-${header.key}`} className="flex gap-2 items-center">
                       <Input 
                         placeholder="Header Key"
                         value={header.key}

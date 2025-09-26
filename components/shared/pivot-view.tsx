@@ -153,7 +153,7 @@ export default function PivotView({ data, title = 'Pivot', gridKey }: PivotViewP
       if (!prev || prev.length === 0) return [...keys]
       const set = new Set(keys)
       const kept = prev.filter(k => set.has(k))
-      const added = keys.filter(k => !kept.includes(k))
+      const added = keys.filter((k: any) => !kept.includes(k))
       return [...kept, ...added]
     })
   }, [pivotTable.headers])
@@ -389,7 +389,7 @@ export default function PivotView({ data, title = 'Pivot', gridKey }: PivotViewP
           <thead>
             <tr>
               <th className="px-3 py-2 border-b bg-gray-50 sticky top-0 text-left font-medium">{rowField || '#'}</th>
-              {(colOrder.length > 0 ? colOrder : (pivotTable as any).colKeys || []).map((h, idx) => (
+              {(colOrder.length > 0 ? colOrder : (pivotTable as any).colKeys || []).map((h: any, idx: any) => (
                 <th
                   key={h}
                   className="px-3 py-2 border-b bg-gray-50 sticky top-0 text-center font-medium select-none"

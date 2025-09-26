@@ -124,7 +124,7 @@ export default function PivotAltView({ data, title = 'Pivot 2', gridKey }: Pivot
           }
           configRef.current = nextCfg
           // update state without retriggering pivot rebuild loop
-          setConfig(prev => {
+          setConfig((prev: any) => {
             const same = JSON.stringify(prev) === JSON.stringify(nextCfg)
             return same ? prev : nextCfg
           })

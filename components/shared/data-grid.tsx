@@ -252,8 +252,8 @@ export function DataGrid({
         <div className="ag-theme-alpine w-full h-[700px]">
           <AgGridReact
             rowData={data}
-            columnDefs={viewMode === 'grid' ? allColumnDefs : pivotColumnDefs}
-            defaultColDef={defaultColDef}
+            columnDefs={viewMode === 'grid' ? allColumnDefs : pivotColumnDefs as any}
+            defaultColDef={defaultColDef as any}
             getRowId={getRowId}
             onGridReady={onGridReady}
             animateRows={true}
@@ -285,7 +285,7 @@ export function DataGrid({
             quickFilterText={quickFilterText}
             // enableCharts={true}
             enableRangeHandle={true}
-            loading={loading}
+            // loading={loading}
             loadingOverlayComponent={'agLoadingOverlay'}
             noRowsOverlayComponent={'agNoRowsOverlay'}
             overlayLoadingTemplate={'<span class="ag-overlay-loading-center">Yükleniyor...</span>'}

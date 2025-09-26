@@ -291,7 +291,7 @@ export default function WebDataRocksPivotView({ data, title = 'Pivot', gridKey }
             document.body.appendChild(contextMenu)
             
             // Close menu when clicking outside
-            const closeMenu = (event) => {
+            const closeMenu = (event: any) => {
               if (!contextMenu.contains(event.target)) {
                 contextMenu.remove()
                 document.removeEventListener('click', closeMenu)
@@ -316,7 +316,7 @@ export default function WebDataRocksPivotView({ data, title = 'Pivot', gridKey }
       }, 1000)
 
       // Helper function to convert pivot data to CSV
-      const convertPivotToCSV = (report) => {
+      const convertPivotToCSV = (report: any) => {
         try {
           // Get the current pivot data
           const data = report.dataSource.data
@@ -327,7 +327,7 @@ export default function WebDataRocksPivotView({ data, title = 'Pivot', gridKey }
           const csvHeaders = headers.join(',')
           
           // Get rows
-          const csvRows = data.map(row => {
+          const csvRows = data.map((row: any) => {
             return headers.map(header => {
               const value = row[header]
               // Escape commas and quotes in CSV
@@ -346,7 +346,7 @@ export default function WebDataRocksPivotView({ data, title = 'Pivot', gridKey }
       }
 
       // Helper function to download CSV
-      const downloadCSV = (csvContent, filename) => {
+      const downloadCSV = (csvContent: any, filename: any) => {
         try {
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
           const link = document.createElement('a')
@@ -378,8 +378,9 @@ export default function WebDataRocksPivotView({ data, title = 'Pivot', gridKey }
           if (!toolbar) {
             // Create custom toolbar
             toolbar = document.createElement('div')
-            toolbar.className = 'wdr-toolbar custom-toolbar'
-            toolbar.style.cssText = `
+            if (toolbar && typeof toolbar.setAttribute === 'function') {
+              toolbar.setAttribute('class', 'wdr-toolbar custom-toolbar')
+              toolbar.style.cssText = `
               display: flex;
               align-items: center;
               gap: 10px;
@@ -389,63 +390,67 @@ export default function WebDataRocksPivotView({ data, title = 'Pivot', gridKey }
               margin-bottom: 10px;
             `
             
-            // Insert toolbar at the top
-            container.insertBefore(toolbar, container.firstChild)
-          }
-          
-          // Add Fields button
-          const fieldsBtn = document.createElement('button')
-          fieldsBtn.textContent = 'Fields'
-          fieldsBtn.style.cssText = `
-            padding: 8px 16px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-          `
-          fieldsBtn.onclick = () => {
-            try {
-              console.log('🔧 Fields button clicked, attempting to show Fields panel...')
-              if (pivot) {
-                // Try different methods to show fields panel
-                if (typeof pivot.showFields === 'function') {
-                  pivot.showFields()
-                  console.log('✅ Fields panel opened via button')
-                } else if (typeof pivot.showToolbar === 'function') {
-                  pivot.showToolbar()
-                  console.log('✅ Toolbar shown as alternative')
-                } else if (typeof pivot.openFieldsPanel === 'function') {
-                  pivot.openFieldsPanel()
-                  console.log('✅ Fields panel opened via openFieldsPanel')
-                } else {
-                  console.log('❌ No fields panel method available')
-                  console.log('Available methods:', Object.getOwnPropertyNames(pivot))
-                  alert('Fields panel açılamadı. WebDataRocks tam yüklenmemiş olabilir.')
-                }
-              }
-            } catch (e) {
-              console.log('❌ Fields panel error:', e)
-              alert('Fields panel açılamadı: ' + e.message)
+              // Insert toolbar at the top
+              container.insertBefore(toolbar, container.firstChild)
             }
           }
-          toolbar.appendChild(fieldsBtn)
           
-          // Add Save button
-          const saveBtn = document.createElement('button')
-          saveBtn.textContent = 'SQL Kaydet'
-          saveBtn.style.cssText = `
-            padding: 8px 16px;
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-          `
-          saveBtn.onclick = saveSettings
-          toolbar.appendChild(saveBtn)
+          // Add Fields button only if toolbar exists
+          if (toolbar && typeof toolbar.appendChild === 'function') {
+            const fieldsBtn = document.createElement('button')
+            fieldsBtn.textContent = 'Fields'
+            fieldsBtn.style.cssText = `
+              padding: 8px 16px;
+              background: #007bff;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 14px;
+            `
+            fieldsBtn.onclick = () => {
+              try {
+                console.log('🔧 Fields button clicked, attempting to show Fields panel...')
+                if (pivot) {
+                  // Try different methods to show fields panel
+                  if (typeof pivot.showFields === 'function') {
+                    pivot.showFields()
+                    console.log('✅ Fields panel opened via button')
+                  } else if (typeof pivot.showToolbar === 'function') {
+                    pivot.showToolbar()
+                    console.log('✅ Toolbar shown as alternative')
+                  } else if (typeof pivot.openFieldsPanel === 'function') {
+                    pivot.openFieldsPanel()
+                    console.log('✅ Fields panel opened via openFieldsPanel')
+                  } else {
+                    console.log('❌ No fields panel method available')
+                    console.log('Available methods:', Object.getOwnPropertyNames(pivot))
+                    alert('Fields panel açılamadı. WebDataRocks tam yüklenmemiş olabilir.')
+                  }
+                }
+              } catch (e) {
+                console.log('❌ Fields panel error:', e)
+                alert('Fields panel açılamadı: ' + (e instanceof Error ? e.message : String(e)))
+              }
+            }
+            
+            toolbar.appendChild(fieldsBtn)
+            
+            // Add Save button
+            const saveBtn = document.createElement('button')
+            saveBtn.textContent = 'SQL Kaydet'
+            saveBtn.style.cssText = `
+              padding: 8px 16px;
+              background: #28a745;
+              color: white;
+              border: none;
+              border-radius: 4px;
+              cursor: pointer;
+              font-size: 14px;
+            `
+            saveBtn.onclick = saveSettings
+            toolbar.appendChild(saveBtn)
+          }
         }
       }, 1500)
 
