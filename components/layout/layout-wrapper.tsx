@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { usePathname } from 'next/navigation'
 import { Sidebar } from './sidebar'
+import { TopHeader } from './top-header'
 import { useEffect, useState } from 'react'
 
 export function LayoutWrapper({ children }: { children: React.ReactNode }) {
@@ -27,11 +28,13 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50" suppressHydrationWarning={true}>
-      <Sidebar />
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
+    <div className="flex flex-col h-screen bg-gray-50" suppressHydrationWarning={true}>
+      <TopHeader />
+      <div className="flex flex-1 overflow-hidden">
+        <main className="flex-1 overflow-auto">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

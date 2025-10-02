@@ -7,6 +7,7 @@ import { PaymentDistributionChart } from './payment-distribution-chart'
 import { DailySalesChart } from './daily-sales-chart'
 import { TopCustomers } from './top-customers'
 import { DailyGrid } from './daily-grid'
+import { ModernDashboard } from './modern-dashboard'
 
 interface DashboardData {
   kpiData: {
@@ -223,32 +224,9 @@ export function MainDashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6">
-      <DashboardHeader
-        title="Genel Rapor Özeti"
-        startDate={startDate}
-        endDate={endDate}
-        onDateChange={handleDateChange}
-        onUpdate={handleUpdate}
-      />
-
-      <KPICards data={data.kpiData} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <PaymentDistributionChart data={data.paymentDistribution} />
-        </div>
-        
-        <div className="lg:col-span-1">
-          <DailySalesChart data={data.dailySales} />
-        </div>
-        
-        <div className="lg:col-span-1">
-          <TopCustomers data={data.topCustomers} />
-        </div>
-      </div>
-
-      <DailyGrid data={data.dailyGrid} />
+    <div>
+      {/* Import ModernDashboard component */}
+      <ModernDashboard />
     </div>
   )
 }

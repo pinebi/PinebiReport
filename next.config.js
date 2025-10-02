@@ -5,6 +5,11 @@ const nextConfig = {
   compress: true,
   poweredByHeader: false,
   
+  // Force port 3000
+  env: {
+    PORT: '3000',
+  },
+  
   // Performance optimizations (disabled for Turbopack compatibility)
   // compiler: {
   //   removeConsole: process.env.NODE_ENV === 'production',

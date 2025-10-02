@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { ReportCategory } from '@/types'
-import { MainDashboard } from '@/components/dashboard/main-dashboard'
+// Modern dashboard artık direkt burada implement edildi
 
 export default function HomePage() {
   const { user, isLoading } = useAuth()
@@ -54,7 +54,196 @@ export default function HomePage() {
 
   // Show dashboard for authenticated users
   if (user) {
-    return <MainDashboard />
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Modern Dashboard Content */}
+        <div className="p-6">
+          {/* Top Stats Cards Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
+            {/* Canlı Ciro */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-gray-600">Canlı Ciro</h3>
+                <div className="text-2xl font-bold text-gray-900">₺4.2M</div>
+                <div className="text-sm text-gray-500">Bugün</div>
+                <button className="w-full mt-3 px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors">
+                  Detaylı İncele
+                </button>
+              </div>
+            </div>
+
+            {/* Bu Hafta Ciro */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-gray-600">Bu Hafta</h3>
+                <div className="text-2xl font-bold text-gray-900">₺28.5M</div>
+                <div className="text-sm text-gray-500">Bu Hafta</div>
+                <button className="w-full mt-3 px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors">
+                  Detaylı İncele
+                </button>
+              </div>
+            </div>
+
+            {/* 15 Günlük Hareketsiz Ürünler */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-gray-600">15 Günlük Hareketsiz Ürünler</h3>
+                <div className="text-2xl font-bold text-yellow-600">18,887</div>
+                <div className="text-sm text-gray-500">Çeşit</div>
+                <button className="w-full mt-3 px-4 py-2 bg-yellow-500 text-white text-sm rounded-md hover:bg-yellow-600 transition-colors">
+                  ⚠ Detaylı İncele
+                </button>
+              </div>
+            </div>
+
+            {/* Toplam Stok */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                  </svg>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-gray-600">Toplam Stok</h3>
+                <div className="text-2xl font-bold text-yellow-600">1.2M</div>
+                <div className="text-sm text-gray-500">Toplam Stok</div>
+                <button className="w-full mt-3 px-4 py-2 bg-yellow-500 text-white text-sm rounded-md hover:bg-yellow-600 transition-colors">
+                  ⚠ Detaylı İncele
+                </button>
+              </div>
+            </div>
+
+            {/* Top 250 Ürünün Ciroya Katkısı */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-sm font-medium text-gray-600">Top 250 Ürünün Ciroya Katkısı</h3>
+                <div className="flex items-center space-x-4">
+                  <div>
+                    <div className="text-lg font-bold text-green-600">%68.5</div>
+                    <div className="text-xs text-gray-500">Miktarsal Katkı</div>
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold text-green-600">%72.3</div>
+                    <div className="text-xs text-gray-500">Finansal Katkı</div>
+                  </div>
+                </div>
+                <button className="w-full mt-3 px-4 py-2 bg-green-600 text-white text-sm rounded-md hover:bg-green-700 transition-colors">
+                  ✓ Detaylı İncele
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Dashboard Cards Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Eksik Teslimat */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  </svg>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-800">Eksik Teslimat</h3>
+                <div className="text-4xl font-bold text-blue-600">0</div>
+                <p className="text-sm text-gray-600">Son 1 ay içerisinde eksik teslim edilen sipariş sayısı</p>
+                <button className="w-full mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2">
+                  <span>Detaylı İncele</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Teslimat Bekleyen - 1 */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-gray-100 rounded-lg">
+                  <svg className="w-8 h-8 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-800">Teslimat Bekleyen - 1</h3>
+                <div className="text-4xl font-bold text-gray-600">0</div>
+                <p className="text-sm text-gray-600">Belirtilen teslim tarihi geçen siparişler</p>
+                <button className="w-full mt-4 px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2">
+                  <span>Detaylı İncele</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Teslimat Bekleyen - 2 */}
+            <div className="bg-white rounded-lg shadow-sm border p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-red-100 rounded-lg">
+                  <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-lg font-semibold text-gray-800">Teslimat Bekleyen - 2</h3>
+                <div className="text-4xl font-bold text-red-600">1,239</div>
+                <p className="text-sm text-gray-600">Teslim tarihi belirtilmemiş, 7+ gün geçen siparişler</p>
+                <button className="w-full mt-4 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center justify-center space-x-2">
+                  <span>⚠ Detaylı İncele</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Bugün Teslim Alınan Siparişler */}
+          <div className="mt-8 bg-white rounded-lg shadow-sm border">
+            <div className="bg-slate-700 text-white px-6 py-4 rounded-t-lg">
+              <h2 className="text-lg font-semibold flex items-center space-x-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+                <span>Bugün Teslim Alınan Siparişler</span>
+              </h2>
+            </div>
+            <div className="p-12 text-center">
+              <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+              </svg>
+              <p className="text-gray-500 text-lg">Bugün teslim edilen sipariş bulunmuyor.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
   return (
     <div className="p-8">
