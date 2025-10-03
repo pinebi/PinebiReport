@@ -12,30 +12,37 @@ export async function GET() {
       console.warn('⚠️ DB categories fetch failed, falling back to mock:', (e as any)?.message)
     }
     
-    if (!categories || categories.length === 0) {
-      // Fallback mock categories
-      categories = [
-        {
-          id: 'cat-satis',
-          name: 'Satış Raporları',
-          description: 'Satış performansı ve analiz raporları',
-          icon: '📊',
-          color: '#3B82F6',
-          sortOrder: 1,
-          isActive: true,
-          parentId: null
-        },
-        {
-          id: 'cat-finansal',
-          name: 'Finansal Raporlar',
-          description: 'Muhasebe ve finansal analiz raporları',
-          icon: '💰',
-          color: '#8B5CF6',
-          sortOrder: 2,
-          isActive: true,
-          parentId: null
-        }
-      ]
+    // Always include mock categories for better UX
+    const mockCategories = [
+      {
+        id: 'cat-satis',
+        name: 'Satış Raporları',
+        description: 'Satış performansı ve analiz raporları',
+        icon: '📊',
+        color: '#3B82F6',
+        sortOrder: 1,
+        isActive: true,
+        parentId: null
+      },
+      {
+        id: 'cat-finansal',
+        name: 'Finansal Raporlar',
+        description: 'Muhasebe ve finansal analiz raporları',
+        icon: '💰',
+        color: '#8B5CF6',
+        sortOrder: 2,
+        isActive: true,
+        parentId: null
+      }
+    ]
+
+    // Merge database categories with mock categories
+    const existingCategoryNames = categories.map((cat: any) => cat.name)
+    const missingMockCategories = mockCategories.filter(mock => !existingCategoryNames.includes(mock.name))
+    
+    if (missingMockCategories.length > 0) {
+      console.log('📊 Adding missing mock categories:', missingMockCategories.map(c => c.name))
+      categories = [...categories, ...missingMockCategories]
     }
 
     console.log('📊 Returning categories:', categories.length)

@@ -82,6 +82,27 @@ export async function GET(request: NextRequest) {
         const h = typeof r.headers === 'string' ? JSON.parse(r.headers) : r.headers
         if (h && typeof h.showInMenu !== 'undefined') showInMenu = !!h.showInMenu
       } catch {}
+      
+      // Fix category mapping for sales reports - ALL sales reports should go to sales-reports category
+      if (r.name && r.name.includes('Satış') && (r.categoryId === 'finance-reports' || r.categoryId === 'cat-satis')) {
+        console.log('🔄 Moving sales report to correct category:', r.name, 'from', r.categoryId, 'to sales-reports')
+        return { 
+          ...r, 
+          showInMenu, 
+          categoryId: 'sales-reports',
+          category: {
+            id: 'sales-reports',
+            name: 'Satış Raporları',
+            description: 'Satış performansı ve analiz raporları',
+            icon: '📊',
+            color: '#3B82F6',
+            sortOrder: 1,
+            isActive: true,
+            parentId: null
+          }
+        }
+      }
+      
       return { ...r, showInMenu }
     })
     console.log('Reports found:', projected.length)

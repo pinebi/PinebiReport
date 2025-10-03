@@ -7,7 +7,7 @@ import { EnhancedDataGrid } from '@/components/shared/enhanced-data-grid'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { ArrowLeft, Search, Play, Download, FileText } from 'lucide-react'
+import { Search, Play, Download, FileText } from 'lucide-react'
 import { ReportConfig } from '@/types'
 import { ColDef } from 'ag-grid-community'
 import Link from 'next/link'
@@ -150,12 +150,6 @@ export default function CategoryReportsPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-6">
-          <Link href={user?.role === 'admin' ? '/' : '/reports/dashboard'}>
-            <Button variant="outline" size="sm" className="mb-4">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Geri Dön
-            </Button>
-          </Link>
           
           <div className="flex items-center justify-between">
             <div>

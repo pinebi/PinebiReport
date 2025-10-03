@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import { usePathname } from 'next/navigation'
-import { Sidebar } from './sidebar'
+import { TopNavigation } from './top-navigation'
 import { useEffect, useState, memo } from 'react'
 
 export const LayoutWrapper = memo(function LayoutWrapper({ children }: { children: React.ReactNode }) {
@@ -21,15 +21,15 @@ export const LayoutWrapper = memo(function LayoutWrapper({ children }: { childre
     return <div className="flex items-center justify-center h-screen">Yükleniyor...</div>
   }
 
-  // Don't show sidebar on login page
+  // Don't show navigation on login page
   if (pathname === '/login' || !user) {
     return <>{children}</>
   }
 
   return (
-    <div className="flex h-screen bg-gray-50" suppressHydrationWarning={true}>
-      <Sidebar />
-      <main className="flex-1 overflow-auto">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900" suppressHydrationWarning={true}>
+      <TopNavigation />
+      <main className="flex-1">
         {children}
       </main>
     </div>

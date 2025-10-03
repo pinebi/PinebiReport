@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { 
-  ArrowLeft, 
   Play, 
   Calendar,
   RefreshCw,
@@ -589,12 +588,6 @@ export default function RunSpecificReportPage() {
       <div className="min-h-screen bg-gray-50 p-2">
         <div className="w-full">
             <div className="flex items-center gap-4 mb-4">
-            <Link href="/reports">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Geri Dön
-              </Button>
-            </Link>
             <h1 className="text-2xl font-bold text-gray-900">Rapor Yükleniyor...</h1>
           </div>
         </div>
@@ -608,12 +601,6 @@ export default function RunSpecificReportPage() {
         <div className="w-full mb-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-4">
-            <Link href="/reports">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Geri Dön
-              </Button>
-            </Link>
               <div>
               <h1 className="text-2xl font-bold text-gray-900">{report.name}</h1>
               {(urlCompanyName || urlClientName) && (
@@ -635,7 +622,6 @@ export default function RunSpecificReportPage() {
                   )}
                 </div>
               )}
-              <p className="text-gray-600">{report.description}</p>
             </div>
           </div>
 
