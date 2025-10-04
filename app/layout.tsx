@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { DashboardProvider } from '@/contexts/DashboardContext'
+import { ToastProvider } from '@/contexts/ToastContext'
 import { LayoutWrapper } from '@/components/layout/layout-wrapper'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -24,9 +25,11 @@ export default function RootLayout({
       <AuthProvider>
         <ThemeProvider>
           <DashboardProvider>
-            <LayoutWrapper>
-              {children}
-            </LayoutWrapper>
+            <ToastProvider>
+              <LayoutWrapper>
+                {children}
+              </LayoutWrapper>
+            </ToastProvider>
           </DashboardProvider>
         </ThemeProvider>
       </AuthProvider>

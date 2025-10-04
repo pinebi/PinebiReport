@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { DashboardWidget } from '@/types'
-import { KpiCards } from './kpi-cards'
+import { KPICards } from './kpi-cards'
 import { DailySalesChart } from './daily-sales-chart'
 import { PaymentDistributionChart } from './payment-distribution-chart'
 import { TopCustomers } from './top-customers'
@@ -106,16 +106,16 @@ export function WidgetRenderer({ widget }: WidgetRendererProps) {
 
     switch (widget.widgetType) {
       case 'kpi':
-        return <KpiCards data={data} config={widget.config} />
+        return <KPICards data={data} />
       
       case 'chart':
-        return <DailySalesChart data={data} config={widget.config} />
+        return <DailySalesChart data={data} />
       
       case 'gauge':
-        return <PaymentDistributionChart data={data} config={widget.config} />
+        return <PaymentDistributionChart data={data} />
       
       case 'table':
-        return <TopCustomers data={data} config={widget.config} />
+        return <TopCustomers data={data} />
       
       case 'progress':
         return <ProgressWidget data={data} config={widget.config} />

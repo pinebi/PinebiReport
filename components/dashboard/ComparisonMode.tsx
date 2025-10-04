@@ -275,9 +275,9 @@ export function ComparisonMode({
                   {comparison && (
                     <div className={cn(
                       "flex items-center gap-2 p-3 rounded-lg",
-                      getTrendColor(comparison.trend)
+                      getTrendColor(comparison.trend as any)
                     )}>
-                      {getTrendIcon(comparison.trend)}
+                      {getTrendIcon(comparison.trend as any)}
                       <div className="flex items-center gap-2">
                         <span className="font-medium">
                           {comparison.changePercent > 0 ? '+' : ''}{comparison.changePercent.toFixed(1)}%

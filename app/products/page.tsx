@@ -18,6 +18,7 @@ import {
   Edit, 
   Trash2, 
   Package,
+  Eye,
   Tag,
   DollarSign,
   AlertTriangle,

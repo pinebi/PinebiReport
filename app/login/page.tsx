@@ -65,9 +65,29 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-            <LogIn className="h-8 w-8 text-blue-600" />
+          {/* Pinebi Logo */}
+          <div className="mx-auto w-16 h-16 relative mb-4">
+            {/* Ana Logo Şekli - Lime Green */}
+            <div className="absolute inset-0">
+              {/* Sol dikey bar */}
+              <div className="absolute left-2 top-2 w-1 h-12 bg-[#A7F300] rounded-full"></div>
+              
+              {/* Orta yatay bar */}
+              <div className="absolute left-3 top-8 w-4 h-1 bg-[#A7F300] rounded-full"></div>
+              
+              {/* Üst dikey bar */}
+              <div className="absolute left-3 top-2 w-1 h-3 bg-[#A7F300] rounded-full"></div>
+              
+              {/* Sağ üçgen */}
+              <div className="absolute left-8 top-4">
+                <div className="w-0 h-0 border-l-[8px] border-l-[#A7F300] border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent"></div>
+              </div>
+              
+              {/* Sağ yatay bar */}
+              <div className="absolute left-12 top-8 w-6 h-1 bg-[#A7F300] rounded-full"></div>
+            </div>
           </div>
+          
           <CardTitle className="text-2xl font-bold text-gray-900">
             Pinebi Report
           </CardTitle>

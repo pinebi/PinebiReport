@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTheme } from '@/contexts/ThemeContext'
 import { 
   Building2, 
   Users, 
@@ -20,17 +21,25 @@ import {
   Folder,
   Calendar,
   Menu,
-  X
+  X,
+  Sun,
+  Moon,
+  Palette,
+  TestTube,
+  Activity,
+  Gauge
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { clsx } from 'clsx'
 import { ReportCategory } from '@/types'
 import { ThemeSelector } from '@/components/theme/ThemeSelector'
+import { Skeleton, SkeletonNavigation } from '@/components/ui/skeleton-loader'
+import { useToast } from '@/contexts/ToastContext'
 
 interface MenuItem {
   id: string
   label: string
-  icon: React.ReactNode
+  icon?: React.ReactNode
   href: string
   children?: MenuItem[]
 }
@@ -44,6 +53,8 @@ interface ReportWithCategory {
     name: string
   }
   showInMenu?: boolean
+  isActive?: boolean
+  companyId?: string
 }
 
 // Static menu items without JSX icons to avoid re-render issues
@@ -61,17 +72,20 @@ const getStaticMenuItems = (): Omit<MenuItem, 'icon'>[] => [
       {
         id: 'products-list',
         label: 'Ürün Listesi',
-        href: '/products'
+        href: '/products',
+        icon: 'Package'
       },
       {
         id: 'products-categories',
         label: 'Kategoriler',
-        href: '/products/categories'
+        href: '/products/categories',
+        icon: 'Tag'
       },
       {
         id: 'products-form-builder',
         label: 'Form Oluşturucu',
-        href: '/products/form-builder'
+        href: '/products/form-builder',
+        icon: 'Settings'
       }
     ]
   },
@@ -79,6 +93,43 @@ const getStaticMenuItems = (): Omit<MenuItem, 'icon'>[] => [
     id: 'calendar',
     label: 'Takvim ve Hatırlatmalar',
     href: '/calendar'
+  },
+  {
+    id: 'test',
+    label: 'Test Merkezi',
+    href: '',
+    children: [
+      {
+        id: 'test-main',
+        label: 'Ana Test Sayfası',
+        href: '/test'
+      },
+      {
+        id: 'test-ui-ux',
+        label: 'UI/UX Testleri',
+        href: '/test/ui-ux'
+      },
+      {
+        id: 'test-analytics',
+        label: 'Analytics Testleri',
+        href: '/test/analytics'
+      },
+      {
+        id: 'test-workflow',
+        label: 'Workflow Testleri',
+        href: '/test/workflow'
+      },
+      {
+        id: 'test-realtime',
+        label: 'Real-time Testleri',
+        href: '/test/realtime'
+      },
+      {
+        id: 'test-performance',
+        label: 'Performance Testleri',
+        href: '/test/performance'
+      }
+    ]
   },
   {
     id: 'reports',
@@ -138,8 +189,10 @@ export function TopNavigation() {
   const [reportCategories, setReportCategories] = useState<ReportCategory[]>([])
   const [reports, setReports] = useState<ReportWithCategory[]>([])
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
   const pathname = usePathname()
   const { user, logout } = useAuth()
+  const { success } = useToast()
 
   // Helper function to get icon for menu item
   const getIconForMenuItem = (itemId: string) => {
@@ -152,6 +205,13 @@ export function TopNavigation() {
       case 'products-form-builder': return <Settings className="w-4 h-4" />
       case 'users': return <Users className="w-4 h-4" />
       case 'calendar': return <Calendar className="w-4 h-4" />
+      case 'test': return <TestTube className="w-4 h-4" />
+      case 'test-main': return <TestTube className="w-4 h-4" />
+      case 'test-ui-ux': return <Settings className="w-4 h-4" />
+      case 'test-analytics': return <BarChart3 className="w-4 h-4" />
+      case 'test-workflow': return <Settings className="w-4 h-4" />
+      case 'test-realtime': return <Activity className="w-4 h-4" />
+      case 'test-performance': return <Gauge className="w-4 h-4" />
       case 'reports': return <FileText className="w-4 h-4" />
       case 'report-management': return <Settings className="w-4 h-4" />
       case 'report-dashboard': return <BarChart3 className="w-4 h-4" />
@@ -167,6 +227,7 @@ export function TopNavigation() {
   useEffect(() => {
     const loadData = async () => {
       try {
+        setIsLoading(true)
         console.log('Loading top navigation data...')
         // Load categories with retry + cache
         const fetchWithRetry = async (url: string, cacheKey: string, attempts = 3, delayMs = 300): Promise<any> => {
@@ -204,6 +265,8 @@ export function TopNavigation() {
         if (Array.isArray(reportsWithMenuStatus)) setReports(reportsWithMenuStatus)
       } catch (error) {
         console.error('Error loading data:', error)
+      } finally {
+        setIsLoading(false)
       }
     }
 
@@ -279,7 +342,8 @@ export function TopNavigation() {
                 // Get reports for this category and its children
                 const categoryReports = reports.filter(report => {
                   // Only show active reports that are marked to show in menu
-                  if (!report.isActive || report.showInMenu !== true) return false
+                  if (!report.isActive) return false
+                  if (report.showInMenu === false) return false
                   
                   // Check if report belongs to current category (both categoryId and category.id)
                   const belongsToCategory = report.categoryId === category.id || 
@@ -360,7 +424,8 @@ export function TopNavigation() {
                 // Get reports for this category and its children
                 const categoryReports = reports.filter(report => {
                   // Only show active reports that are marked to show in menu
-                  if (!report.isActive || report.showInMenu !== true) return false
+                  if (!report.isActive) return false
+                  if (report.showInMenu === false) return false
                   
                   // Check if report belongs to current category (both categoryId and category.id)
                   const belongsToCategory = report.categoryId === category.id || 
@@ -586,7 +651,15 @@ export function TopNavigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-1">
-            {filteredMenuItems.map((item) => renderDropdownItem(item))}
+            {isLoading ? (
+              <div className="flex items-center space-x-1">
+                <Skeleton variant="rectangular" width={80} height={32} className="rounded-md" />
+                <Skeleton variant="rectangular" width={100} height={32} className="rounded-md" />
+                <Skeleton variant="rectangular" width={120} height={32} className="rounded-md" />
+              </div>
+            ) : (
+              filteredMenuItems.map((item) => renderDropdownItem(item))
+            )}
           </div>
 
           {/* Right Side - User Info & Actions */}
@@ -595,11 +668,11 @@ export function TopNavigation() {
             <ThemeSelector />
             
             {/* User Info */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                 {user.username.charAt(0).toUpperCase()}
               </div>
-              <div className="hidden sm:block">
+              <div className="hidden md:block">
                 <p className="text-sm font-medium text-gray-900 dark:text-white">
                   {user.username}
                 </p>
@@ -607,7 +680,15 @@ export function TopNavigation() {
                   {user.role === 'ADMIN' ? 'Yönetici' : 'Rapor Kullanıcısı'}
                 </p>
               </div>
+              <div className="md:hidden">
+                <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-20">
+                  {user.username}
+                </p>
+              </div>
             </div>
+
+            {/* Theme Toggle */}
+            <ThemeToggle />
 
             {/* Logout Button */}
             <Button
@@ -639,7 +720,10 @@ export function TopNavigation() {
         {isMobileMenuOpen && (
           <div className="lg:hidden border-t border-gray-200 dark:border-gray-700" data-dropdown-menu>
             <div className="py-4 space-y-2">
-              {filteredMenuItems.map((item) => (
+              {isLoading ? (
+                <SkeletonNavigation />
+              ) : (
+                filteredMenuItems.map((item) => (
                 <div key={item.id} className="block">
                   {item.children && item.children.length > 0 ? (
                     <div>
@@ -659,7 +743,7 @@ export function TopNavigation() {
                       </button>
                       {expandedItems.includes(item.id) && (
                         <div className="ml-4 mt-2 space-y-1">
-                          {item.children.map((child) => (
+                          {item.children.map((child: MenuItem) => (
                             <Link
                               key={child.id}
                               href={child.href}
@@ -695,11 +779,143 @@ export function TopNavigation() {
                     </Link>
                   )}
                 </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         )}
       </div>
     </nav>
+  )
+}
+
+// Theme Toggle Component
+function ThemeToggle() {
+  const { theme, updateTheme } = useTheme()
+  const [isOpen, setIsOpen] = useState(false)
+  const { success } = useToast()
+
+  const toggleTheme = async () => {
+    const newTheme = {
+      ...theme,
+      darkMode: !theme.darkMode,
+      themeName: !theme.darkMode ? 'dark' : 'light'
+    }
+    await updateTheme(newTheme)
+    success(
+      'Tema Değiştirildi',
+      `Başarıyla ${!theme.darkMode ? 'koyu' : 'açık'} temaya geçildi`,
+      { duration: 3000 }
+    )
+  }
+
+  const quickThemes = [
+    {
+      name: 'Light',
+      theme: {
+        ...theme,
+        themeName: 'light',
+        darkMode: false,
+        primaryColor: '#3b82f6',
+        secondaryColor: '#64748b',
+        backgroundColor: '#ffffff',
+        textColor: '#1f2937'
+      },
+      icon: Sun
+    },
+    {
+      name: 'Dark',
+      theme: {
+        ...theme,
+        themeName: 'dark',
+        darkMode: true,
+        primaryColor: '#60a5fa',
+        secondaryColor: '#94a3b8',
+        backgroundColor: '#1f2937',
+        textColor: '#f9fafb'
+      },
+      icon: Moon
+    }
+  ]
+
+  return (
+    <div className="relative">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={toggleTheme}
+        className="text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+        title={theme.darkMode ? 'Light Mode' : 'Dark Mode'}
+      >
+        {theme.darkMode ? (
+          <Sun className="h-4 w-4" />
+        ) : (
+          <Moon className="h-4 w-4" />
+        )}
+      </Button>
+      
+      {/* Quick Theme Options - Hidden on mobile */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => setIsOpen(!isOpen)}
+        className="hidden sm:flex text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 ml-1"
+        title="Tema Seçenekleri"
+      >
+        <Palette className="h-4 w-4" />
+      </Button>
+
+      {isOpen && (
+        <>
+          <div 
+            className="fixed inset-0 z-40"
+            onClick={() => setIsOpen(false)}
+          />
+          <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+            <div className="py-2">
+              {quickThemes.map((quickTheme) => {
+                const Icon = quickTheme.icon
+                const isActive = theme.themeName === quickTheme.theme.themeName
+                
+                return (
+                  <button
+                    key={quickTheme.name}
+                    onClick={async () => {
+                      await updateTheme(quickTheme.theme)
+                      setIsOpen(false)
+                      success(
+                        'Tema Değiştirildi',
+                        `${quickTheme.name} temaya başarıyla geçildi`,
+                        { duration: 3000 }
+                      )
+                    }}
+                    className={clsx(
+                      'flex items-center gap-3 w-full px-4 py-2 text-sm transition-colors',
+                      'hover:bg-gray-100 dark:hover:bg-gray-700',
+                      isActive && 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300'
+                    )}
+                  >
+                    <Icon className="w-4 h-4" />
+                    <span>{quickTheme.name}</span>
+                    {isActive && <div className="ml-auto w-2 h-2 bg-blue-500 rounded-full" />}
+                  </button>
+                )
+              })}
+              
+              <div className="border-t border-gray-200 dark:border-gray-700 mt-2 pt-2">
+                <Link
+                  href="/settings"
+                  className="flex items-center gap-3 w-full px-4 py-2 text-sm transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Settings className="w-4 h-4" />
+                  <span>Tema Ayarları</span>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   )
 }

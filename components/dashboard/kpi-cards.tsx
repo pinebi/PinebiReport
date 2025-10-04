@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { TrendingUp, TrendingDown, Banknote, Users, CreditCard, Wallet } from 'lucide-react'
+import { PinebiLoaderCompact } from '@/components/ui/pinebi-loader'
 
 interface KPIData {
   toplamCiro: number
@@ -12,10 +13,11 @@ interface KPIData {
 }
 
 interface KPICardsProps {
-  data: KPIData
+  data: KPIData | null
+  loading?: boolean
 }
 
-export function KPICards({ data }: KPICardsProps) {
+export function KPICards({ data, loading = false }: KPICardsProps) {
   // Default data if none provided
   const defaultData = {
     toplamCiro: 125000,
@@ -25,8 +27,39 @@ export function KPICards({ data }: KPICardsProps) {
     acikHesap: 17000
   }
 
-  const kpiData = data || defaultData
+  // Loading durumunda skeleton loader göster
+  if (loading || !data) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <Card key={`kpi-loading-${index}`} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
+                  <PinebiLoaderCompact size="small" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse w-3/4"></div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    )
+  }
+
+  const kpiData = data
+
+  // Debug log
+  console.log('🔍 KPICards received data:', data)
+  console.log('🔍 KPICards using kpiData:', kpiData)
   const formatCurrency = (amount: number) => {
+    // NaN veya undefined değerleri kontrol et
+    if (isNaN(amount) || amount === null || amount === undefined) {
+      return '0,00 ₺'
+    }
     return new Intl.NumberFormat('tr-TR', {
       minimumFractionDigits: 2
     }).format(amount) + ' ₺'

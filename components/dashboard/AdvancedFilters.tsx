@@ -259,7 +259,7 @@ export function AdvancedFilters({
                 defaultMonth={dateRange.from}
                 selected={dateRange}
                 onSelect={(range) => {
-                  setDateRange(range || { from: undefined, to: undefined })
+                  setDateRange(range || { from: undefined, to: undefined } as any)
                   handleFilterChange(filter.id, operator, range?.from, range?.to)
                 }}
                 numberOfMonths={2}

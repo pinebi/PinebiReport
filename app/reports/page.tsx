@@ -379,8 +379,8 @@ export default function ReportsPage() {
       name: formData.get('name') as string,
       description: formData.get('description') as string,
       endpointUrl: formData.get('endpointUrl') as string,
-      apiUsername: API_CONFIG.DEFAULT_API_USERNAME, // Sabit API kullanıcı adı
-      apiPassword: API_CONFIG.DEFAULT_API_PASSWORD, // Sabit API şifresi
+      apiUsername: 'PINEBI', // Sabit API kullanıcı adı
+      apiPassword: 'q81ymAbtx1jJ8hoc8IPU79LjPemuXjok2NXYRTa51', // Sabit API şifresi
       headers: JSON.stringify(headersObject),
       parameters: formData.get('parameters') as string || null,
       categoryId: formData.get('categoryId') as string,
@@ -503,7 +503,7 @@ export default function ReportsPage() {
                     id="apiUsername" 
                     name="apiUsername" 
                     required 
-                    value={API_CONFIG.DEFAULT_API_USERNAME}
+                    value="PINEBI"
                     readOnly
                     className="bg-gray-100 cursor-not-allowed"
                     placeholder="API kullanıcı adı (sabit)"
@@ -516,7 +516,7 @@ export default function ReportsPage() {
                     name="apiPassword" 
                     type="password" 
                     required 
-                    value={API_CONFIG.DEFAULT_API_PASSWORD}
+                    value="q81ymAbtx1jJ8hoc8IPU79LjPemuXjok2NXYRTa51"
                     readOnly
                     className="bg-gray-100 cursor-not-allowed"
                     placeholder="API şifresi (sabit)"
@@ -548,7 +548,7 @@ export default function ReportsPage() {
                   name="parameters"
                   rows={6}
                   placeholder='{"USER": {"required": true, "type": "object", "description": "Kullanıcı bilgileri"}, "START_DATE": {"required": true, "type": "string", "format": "YYYY-MM-DD", "description": "Başlangıç tarihi"}, "END_DATE": {"required": true, "type": "string", "format": "YYYY-MM-DD", "description": "Bitiş tarihi"}}'
-                  defaultValue={editingReport?.parameters || ''}
+                  defaultValue={(editingReport as any)?.parameters || ''}
                   className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 />
                 <p className="text-sm text-gray-500 mt-1">

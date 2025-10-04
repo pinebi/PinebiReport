@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import MainDashboard from '@/components/dashboard/main-dashboard'
+import PinebiLoader from '@/components/ui/pinebi-loader'
 
 export default function HomePage() {
   const router = useRouter()
@@ -26,12 +27,11 @@ export default function HomePage() {
   // Loading durumunda
   if (!mounted || isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Yükleniyor...</p>
-        </div>
-      </div>
+      <PinebiLoader 
+        size="large" 
+        text="Sistem başlatılıyor..." 
+        fullScreen={true}
+      />
     )
   }
 
@@ -42,11 +42,10 @@ export default function HomePage() {
 
   // Kullanıcı giriş yapmamışsa (yönlendirme sırasında)
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-50">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-        <p className="text-gray-600 font-medium">Yönlendiriliyor...</p>
-      </div>
-    </div>
+    <PinebiLoader 
+      size="large" 
+      text="Yönlendiriliyor..." 
+      fullScreen={true}
+    />
   )
 }

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { clsx } from 'clsx'
+import { PinebiLoaderCompact } from '@/components/ui/pinebi-loader'
 
 interface TopMenuItem {
   id: string
@@ -123,10 +124,43 @@ export function TopHeader() {
       <div className="flex items-center justify-between px-6 py-3">
         {/* Logo and Brand */}
         <div className="flex items-center space-x-4">
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="flex items-center space-x-2">
-              <div className="text-red-500 font-bold text-lg">MİKRO</div>
-              <div className="text-white font-bold text-lg">FORCE</div>
+          <Link href="/" className="flex items-center space-x-3">
+            {/* Pinebi Logo */}
+            <div className="w-12 h-12 relative">
+              {/* Ana Logo Şekli - Lime Green */}
+              <div className="absolute inset-0">
+                {/* Sol dikey bar - ana çizgi */}
+                <div className="absolute left-1 top-1 w-1 h-10 bg-[#A7F300] rounded-full"></div>
+                
+                {/* Üst yatay bar - P harfinin üst kısmı */}
+                <div className="absolute left-2 top-1 w-3 h-1 bg-[#A7F300] rounded-full"></div>
+                
+                {/* Orta yatay bar - P harfinin orta kısmı */}
+                <div className="absolute left-2 top-4 w-4 h-1 bg-[#A7F300] rounded-full"></div>
+                
+                {/* Sağ üst dikey bar - P harfinin sağ üst köşesi */}
+                <div className="absolute left-5 top-1 w-1 h-2 bg-[#A7F300] rounded-full"></div>
+                
+                {/* Sağ üçgen - P harfinin sağ alt köşesi */}
+                <div className="absolute left-6 top-4">
+                  <div className="w-0 h-0 border-l-[8px] border-l-[#A7F300] border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent"></div>
+                </div>
+                
+                {/* Alt yatay bar - P harfinin alt kısmı */}
+                <div className="absolute left-2 top-8 w-6 h-1 bg-[#A7F300] rounded-full"></div>
+                
+                {/* Sağ alt dikey bar */}
+                <div className="absolute left-7 top-6 w-1 h-3 bg-[#A7F300] rounded-full"></div>
+                
+                {/* Sağ yatay uzantı */}
+                <div className="absolute left-8 top-7 w-3 h-1 bg-[#A7F300] rounded-full"></div>
+              </div>
+            </div>
+            
+            {/* Pinebi Text */}
+            <div className="flex flex-col">
+              <span className="text-white font-bold text-lg leading-none">Pinebi</span>
+              <span className="text-white text-xs font-medium opacity-80 leading-none">Report</span>
             </div>
           </Link>
         </div>
@@ -269,3 +303,6 @@ export function TopHeader() {
     </header>
   )
 }
+
+
+

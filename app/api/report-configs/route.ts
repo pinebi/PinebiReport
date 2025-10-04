@@ -74,6 +74,91 @@ export async function GET(request: NextRequest) {
         console.warn('Database fetch failed, using mock data:', error instanceof Error ? error.message : String(error))
         reports = []
       }
+      
+      // Always add mock sales reports for better UX
+      const mockSalesReports = [
+        {
+          id: 'sales-report-1',
+          name: 'Günlük Satış Raporu',
+          description: 'Günlük satış performansı ve detayları',
+          endpointUrl: 'https://api.pinebi.com/ReportService.svc',
+          apiUsername: 'PINEBI',
+          apiPassword: 'e81ymAbtx1jJ8hoc8IPU79LjPemuXjok2NXYRTa51',
+          headers: JSON.stringify({ 
+            'Content-Type': 'application/json', 
+            'Accept': 'application/json',
+            'Authorization': 'Basic UElORUJJOnE4MXltQWJ0eDFqSjhob2M4SVBVNzlMalBlbXVYam9rMk5YWVJUYTUx',
+            'ENDPOINT': 'GetSalesDashboardData',
+            'showInMenu': true 
+          }),
+          categoryId: 'cat-satis',
+          companyId: 'company-1',
+          userId: 'user-1',
+          isActive: true,
+          menuGroup: 'A',
+          menuOrder: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          category: { id: 'cat-satis', name: 'Satış Raporları' }
+        },
+        {
+          id: 'sales-report-2',
+          name: 'Aylık Satış Özeti',
+          description: 'Aylık satış performansı ve analizi',
+          endpointUrl: 'https://api.pinebi.com/ReportService.svc',
+          apiUsername: 'PINEBI',
+          apiPassword: 'e81ymAbtx1jJ8hoc8IPU79LjPemuXjok2NXYRTa51',
+          headers: JSON.stringify({ 
+            'Content-Type': 'application/json', 
+            'Accept': 'application/json',
+            'Authorization': 'Basic UElORUJJOnE4MXltQWJ0eDFqSjhob2M4SVBVNzlMalBlbXVYam9rMk5YWVJUYTUx',
+            'ENDPOINT': 'GetSalesDashboardData',
+            'showInMenu': true 
+          }),
+          categoryId: 'cat-satis',
+          companyId: 'company-1',
+          userId: 'user-1',
+          isActive: true,
+          menuGroup: 'A',
+          menuOrder: 2,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          category: { id: 'cat-satis', name: 'Satış Raporları' }
+        },
+        {
+          id: 'sales-report-3',
+          name: 'Müşteri Satış Analizi',
+          description: 'Müşteri bazlı satış performansı',
+          endpointUrl: 'https://api.pinebi.com/ReportService.svc',
+          apiUsername: 'PINEBI',
+          apiPassword: 'e81ymAbtx1jJ8hoc8IPU79LjPemuXjok2NXYRTa51',
+          headers: JSON.stringify({ 
+            'Content-Type': 'application/json', 
+            'Accept': 'application/json',
+            'Authorization': 'Basic UElORUJJOnE4MXltQWJ0eDFqSjhob2M4SVBVNzlMalBlbXVYam9rMk5YWVJUYTUx',
+            'ENDPOINT': 'GetSalesDashboardData',
+            'showInMenu': true 
+          }),
+          categoryId: 'cat-satis',
+          companyId: 'company-1',
+          userId: 'user-1',
+          isActive: true,
+          menuGroup: 'A',
+          menuOrder: 3,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          category: { id: 'cat-satis', name: 'Satış Raporları' }
+        }
+      ]
+      
+      // Add mock sales reports if they don't exist
+      const existingReportNames = reports.map((r: any) => r.name)
+      const missingSalesReports = mockSalesReports.filter(mock => !existingReportNames.includes(mock.name))
+      
+      if (missingSalesReports.length > 0) {
+        console.log('📊 Adding missing sales reports:', missingSalesReports.map(r => r.name))
+        reports = [...reports, ...missingSalesReports]
+      }
     }
     // project showInMenu from headers JSON (default true)
     const projected = (reports || []).map((r: any) => {

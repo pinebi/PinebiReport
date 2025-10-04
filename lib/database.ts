@@ -237,8 +237,7 @@ export const db = {
             // Admin can see all reports (no company filtering)
             return prisma.reportConfig.findMany({
               where: { 
-                isActive: true,
-                showInMenu: true
+                isActive: true
               },
               include: { category: true, company: true, user: true },
               orderBy: [
@@ -252,8 +251,7 @@ export const db = {
             return prisma.reportConfig.findMany({
               where: { 
                 isActive: true,
-                companyId: companyId,
-                showInMenu: true
+                companyId: companyId
               },
               include: { category: true, company: true, user: true },
               orderBy: [

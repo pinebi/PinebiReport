@@ -229,9 +229,9 @@ export function ResponsiveDashboard({ children, className }: ResponsiveDashboard
                     layoutMode === 'list' && "w-full"
                   )}
                 >
-                  {React.cloneElement(child, {
+                  {React.cloneElement(child as any, {
                     className: cn(
-                      child.props.className,
+                      (child as any).props.className,
                       // Mobile optimizations
                       viewMode === 'mobile' && "text-sm",
                       layoutMode === 'list' && "mb-2"

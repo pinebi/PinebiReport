@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { KpiCards } from './kpi-cards'
+import { KPICards } from './kpi-cards'
 import { DailySalesChart } from './daily-sales-chart'
 import { PaymentDistributionChart } from './payment-distribution-chart'
 import { TopCustomers } from './top-customers'
@@ -18,6 +18,13 @@ import {
 
 export function SimpleDashboard() {
   const [isLoading, setIsLoading] = useState(false)
+  
+  // Mock data
+  const data = {
+    dailySales: [],
+    paymentDistribution: [],
+    topCustomers: []
+  }
 
   if (isLoading) {
     return (
@@ -114,7 +121,7 @@ export function SimpleDashboard() {
             <CardTitle>Günlük Satış Trendi</CardTitle>
           </CardHeader>
           <CardContent>
-            <DailySalesChart />
+            <DailySalesChart data={data?.dailySales || []} />
           </CardContent>
         </Card>
 
@@ -124,7 +131,7 @@ export function SimpleDashboard() {
             <CardTitle>Ödeme Yöntemleri</CardTitle>
           </CardHeader>
           <CardContent>
-            <PaymentDistributionChart />
+            <PaymentDistributionChart data={data?.paymentDistribution || []} />
           </CardContent>
         </Card>
       </div>
@@ -137,7 +144,7 @@ export function SimpleDashboard() {
             <CardTitle>En İyi Müşteriler</CardTitle>
           </CardHeader>
           <CardContent>
-            <TopCustomers />
+            <TopCustomers data={data?.topCustomers || []} />
           </CardContent>
         </Card>
 

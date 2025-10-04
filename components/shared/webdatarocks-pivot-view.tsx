@@ -373,14 +373,13 @@ export default function WebDataRocksPivotView({ data, title = 'Pivot', gridKey }
         // Try to find WebDataRocks toolbar first
         const container = pivotRef.current
         if (container) {
-          let toolbar = container.querySelector('.wdr-toolbar')
+          let toolbar = container.querySelector('.wdr-toolbar') as HTMLElement
           
           if (!toolbar) {
             // Create custom toolbar
             toolbar = document.createElement('div')
-            if (toolbar && typeof toolbar.setAttribute === 'function') {
-              toolbar.setAttribute('class', 'wdr-toolbar custom-toolbar')
-              toolbar.style.cssText = `
+            toolbar.setAttribute('class', 'wdr-toolbar custom-toolbar')
+            toolbar.style.cssText = `
               display: flex;
               align-items: center;
               gap: 10px;
@@ -390,9 +389,8 @@ export default function WebDataRocksPivotView({ data, title = 'Pivot', gridKey }
               margin-bottom: 10px;
             `
             
-              // Insert toolbar at the top
-              container.insertBefore(toolbar, container.firstChild)
-            }
+            // Insert toolbar at the top
+            container.insertBefore(toolbar, container.firstChild)
           }
           
           // Add Fields button only if toolbar exists

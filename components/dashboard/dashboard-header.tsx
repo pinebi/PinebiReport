@@ -12,6 +12,8 @@ interface DashboardHeaderProps {
   endDate: string
   onDateChange: (startDate: string, endDate: string) => void
   onUpdate: () => void
+  isLiveData?: boolean
+  lastUpdate?: Date | null
 }
 
 export function DashboardHeader({ 
@@ -19,7 +21,9 @@ export function DashboardHeader({
   startDate, 
   endDate, 
   onDateChange, 
-  onUpdate 
+  onUpdate,
+  isLiveData = false,
+  lastUpdate = null
 }: DashboardHeaderProps) {
   const [localStartDate, setLocalStartDate] = useState(startDate)
   const [localEndDate, setLocalEndDate] = useState(endDate)
@@ -32,7 +36,9 @@ export function DashboardHeader({
   return (
     <div className="mb-6">
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+        </div>
         <div className="text-sm text-gray-500">
           {new Date().toLocaleDateString('tr-TR', { 
             day: '2-digit', 

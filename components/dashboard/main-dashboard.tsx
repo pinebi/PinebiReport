@@ -7,6 +7,10 @@ import { PaymentDistributionChart } from './payment-distribution-chart'
 import { DailySalesChart } from './daily-sales-chart'
 import { TopCustomers } from './top-customers'
 import { DailyGrid } from './daily-grid'
+import { CompanyPerformanceWidget } from './company-performance-widget'
+import DailyTrendsChart from './daily-trends-chart'
+import MonthlyComparisonChart from './monthly-comparison-chart'
+import PinebiLoader from '@/components/ui/pinebi-loader'
 import { useAuth } from '@/contexts/AuthContext'
 
 interface DashboardData {
@@ -26,19 +30,35 @@ interface DashboardData {
     date: string
     amount: number
     formattedDate: string
+    dayOfWeek?: string
   }[]
   topCustomers: {
     name: string
     amount: number
     rank: number
   }[]
+  companyPerformance: {
+    company: string
+    revenue: number
+    customers: number
+    marketShare: number
+  }[]
   dailyGrid: any[]
+  monthlyComparison?: {
+    month: string
+    currentYear: number
+    previousYear: number
+    growth: number
+    formattedMonth: string
+  }[]
 }
 
 function MainDashboard() {
   const { user } = useAuth()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isLiveData, setIsLiveData] = useState(false)
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [startDate, setStartDate] = useState(() => {
     const date = new Date()
     date.setDate(date.getDate() - 1) // Default to yesterday
@@ -48,89 +68,33 @@ function MainDashboard() {
     return new Date().toISOString().split('T')[0]
   })
 
-  const fetchDashboardData = async () => {
-    setLoading(true)
-    try {
-      // Determine API configuration based on user's company
-      let apiConfig = {
-        apiUrl: "http://api.pinebi.com:8191/REST.PROXY",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Basic UElORUJJOnE4MXltQWJ0eDFqSjhob2M4SVBVNzlMalBlbXVYam9rMk5YWVJUYTUx",
-          "url": "http://31.145.34.232:8190/REST.CIRO.RAPOR"
-        },
-        uriString: "REST.CIRO.RAPOR.TARIH.URUNDETAYLI"
-      }
-
-      // Check if user belongs to Belpaş company
-      if (user?.companyId === 'cmfzrh8c6000010jtu3bun80y') {
-        console.log('🏢 Belpaş kullanıcısı - Satış Raporu Belpas API kullanılıyor')
-        apiConfig = {
-          apiUrl: "http://api.pinebi.com:8191/REST.PROXY",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": "Basic UElORUJJOnE4MXltQWJ0eDFqSjhob2M4SVBVNzlMalBlbXVYam9rMk5YWVJUYTUx", // PINEBI:q81ymAbtx1jJ8hoc8IPU79LjPemuXjok2NXYRTa51
-            "url": "http://78.189.91.186:8190/REST.CIRO.RAPOR"
-          },
-          uriString: "REST.CIRO.RAPOR"
-        }
-      } else {
-        console.log('🏢 RMK kullanıcısı - RMK API kullanılıyor')
-      }
-
-      // API call to get dashboard data
-      const response = await fetch('/api/reports/run', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          apiUrl: apiConfig.apiUrl,
-          headers: apiConfig.headers,
-          method: "POST",
-          body: {
-            "USER": {
-              "ID": "df51ad80-ef0b-4cc8-a941-be7a6ca638d9"
-            },
-            "START_DATE": startDate,
-            "END_DATE": endDate,
-            "uriString": apiConfig.uriString
-          }
-        })
-      })
-
-      const result = await response.json()
-      
-      if (result.success && result.data?.DATAS) {
-        const rawData = result.data.DATAS
-        
-        // Process data for dashboard components
-        const processedData = processDashboardData(rawData)
-        setData(processedData)
-      } else {
-        // Set default/mock data if API fails
-        setData(getDefaultDashboardData())
-      }
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error)
-      // Set default/mock data on error
-      setData(getDefaultDashboardData())
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const processDashboardData = (rawData: any[]): DashboardData => {
-    // Calculate KPI totals
-    const totals = rawData.reduce((acc, item) => ({
-      nakit: acc.nakit + (item.NAKIT || 0),
-      krediKarti: acc.krediKarti + (item.KREDI_KARTI || 0),
-      nakitKrediKarti: acc.nakitKrediKarti + (item['NAKIT+KREDI_KARTI'] || 0),
-      acikHesap: acc.acikHesap + (item.ACIK_HESAP || 0),
-      genelToplam: acc.genelToplam + (item.GENEL_TOPLAM || 0)
-    }), { nakit: 0, krediKarti: 0, nakitKrediKarti: 0, acikHesap: 0, genelToplam: 0 })
+    console.log('🔍 processDashboardData called with:', rawData)
+    console.log('🔍 rawData length:', rawData.length)
+    
+    // Calculate KPI totals (Pinebi API formatına uygun)
+    const totals = rawData.reduce((acc, item) => {
+      console.log('🔍 Processing item:', item)
+      const nakit = item['NAKIT'] || 0
+      const krediKarti = item['KREDI_KARTI'] || 0
+      const nakitKrediKarti = item['NAKIT+KREDI_KARTI'] || 0
+      const acikHesap = item['ACIK_HESAP'] || 0
+      const genelToplam = item['GENEL_TOPLAM'] || 0
+      
+      console.log('🔍 Values:', { nakit, krediKarti, nakitKrediKarti, acikHesap, genelToplam })
+      
+      return {
+        nakit: acc.nakit + nakit,
+        krediKarti: acc.krediKarti + krediKarti,
+        nakitKrediKarti: acc.nakitKrediKarti + nakitKrediKarti,
+        acikHesap: acc.acikHesap + acikHesap,
+        genelToplam: acc.genelToplam + genelToplam
+      }
+    }, { nakit: 0, krediKarti: 0, nakitKrediKarti: 0, acikHesap: 0, genelToplam: 0 })
+    
+    console.log('🔍 Final totals:', totals)
 
-    // KPI Data
+    // KPI Data - Doğru format (KPICards component'i için)
     const kpiData = {
       toplamCiro: totals.genelToplam,
       nakit: totals.nakit,
@@ -146,20 +110,20 @@ function MainDashboard() {
       { name: 'Açık Hesap', value: totals.acikHesap, color: '#ef4444' }
     ].filter(item => item.value > 0)
 
-    // Daily Sales Chart Data
+    // Daily Sales Chart Data (Pinebi API formatına uygun)
     const dailySales = rawData.map(item => ({
-      date: item.Tarih,
-      amount: item.GENEL_TOPLAM || 0,
-      formattedDate: new Date(item.Tarih).toLocaleDateString('tr-TR', { 
+      date: item['Tarih'],
+      amount: item['GENEL_TOPLAM'] || 0,
+      formattedDate: new Date(item['Tarih']).toLocaleDateString('tr-TR', { 
         day: '2-digit', 
         month: '2-digit' 
       })
     }))
 
-    // Top Customers (using Firma as customer for now)
+    // Top Customers (using Firma as customer for now - Pinebi API formatına uygun)
     const customerTotals = rawData.reduce((acc: any, item) => {
-      const firma = item.Firma || 'Bilinmeyen'
-      acc[firma] = (acc[firma] || 0) + (item.GENEL_TOPLAM || 0)
+      const firma = item['Firma'] || 'Bilinmeyen'
+      acc[firma] = (acc[firma] || 0) + (item['GENEL_TOPLAM'] || 0)
       return acc
     }, {})
 
@@ -172,13 +136,97 @@ function MainDashboard() {
         rank: index + 1
       }))
 
+    // Company Performance Data (Pinebi API formatına uygun)
+    const companyData = rawData.reduce((acc: any, item) => {
+      const firma = item['Firma'] || 'Bilinmeyen'
+      if (!acc[firma]) {
+        acc[firma] = { revenue: 0, customers: 0 }
+      }
+      acc[firma].revenue += item['GENEL_TOPLAM'] || 0
+      acc[firma].customers += item['Musteri Sayisi'] || 0
+      return acc
+    }, {})
+
+    const companyPerformance = Object.entries(companyData)
+      .map(([company, data]: any) => ({
+        company,
+        revenue: data.revenue,
+        customers: data.customers,
+        marketShare: totals.genelToplam > 0 ? (data.revenue / totals.genelToplam) * 100 : 0
+      }))
+      .sort((a, b) => b.marketShare - a.marketShare)
+
     return {
       kpiData,
       paymentDistribution,
       dailySales,
       topCustomers,
+      companyPerformance,
       dailyGrid: rawData
     }
+  }
+
+  const fetchDashboardDataWithDates = async (start: string, end: string) => {
+    setLoading(true)
+
+    try {
+      console.log('🚀 Loading dashboard data from API with dates:', { start, end })
+
+      const requestBody = {
+        startDate: start,
+        endDate: end,
+        firma: user?.company?.name || 'RMK' // Kullanıcının şirket adını kullan
+      }
+      
+      console.log('📅 Request body:', requestBody)
+
+      const response = await fetch('/api/dashboard', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      })
+
+      if (!response.ok) {
+        throw new Error(`API request failed: ${response.status}`)
+      }
+
+      const result = await response.json()
+      console.log('✅ API response received:', result)
+
+      if (result.success && result.data) {
+        console.log('🔍 API result received:', result)
+        console.log('🔍 API already processed data:', result.data)
+        console.log('🔍 KPI Data from API:', result.data.kpiData)
+        
+        // API'de zaten veriler işlenmiş, direkt kullan
+        setData(result.data)
+        setIsLiveData(!result.isMock)
+        setLastUpdate(new Date())
+        console.log('✅ Real data loaded successfully')
+        if (result.isMock) {
+          console.log('⚠️ Using mock data due to API error')
+        } else {
+          console.log('🎉 Live data from Pinebi API!')
+        }
+      } else {
+        throw new Error('Invalid API response')
+      }
+
+    } catch (error) {
+      console.error('Error loading dashboard data:', error)
+      console.log('🔄 Falling back to mock data')
+      const mockData = getDefaultDashboardData()
+      setData(mockData)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchDashboardData = async () => {
+    // Mevcut state'teki startDate ve endDate'i kullanarak çağır
+    fetchDashboardDataWithDates(startDate, endDate)
   }
 
   const getDefaultDashboardData = (): DashboardData => ({
@@ -202,6 +250,32 @@ function MainDashboard() {
       { name: 'Rahmi M.Koç Müzesi', amount: 140000, rank: 1 },
       { name: 'Rahmi M.Koç Ayvalık', amount: 62488, rank: 2 }
     ],
+    companyPerformance: [
+      {
+        company: "Rahmi M.Koç Müzesi",
+        revenue: 233678,
+        customers: 233,
+        marketShare: 91.1
+      },
+      {
+        company: "Rahmi M.Koç Kitaplık", 
+        revenue: 13320,
+        customers: 47,
+        marketShare: 5.2
+      },
+      {
+        company: "Rahmi M.Koç Ayvalık",
+        revenue: 7655,
+        customers: 24,
+        marketShare: 3.0
+      },
+      {
+        company: "Rahmi M.Koç Cunda",
+        revenue: 1725,
+        customers: 13,
+        marketShare: 0.7
+      }
+    ],
     dailyGrid: [
       {
         Tarih: '2025-09-18T00:00:00',
@@ -223,12 +297,26 @@ function MainDashboard() {
         'NAKIT+KREDI_KARTI': 21600.0,
         GENEL_TOPLAM: 21600.0
       }
+    ],
+    monthlyComparison: [
+      { month: 'Ocak', currentYear: 195000, previousYear: 175000, growth: 11.4, formattedMonth: 'Oca' },
+      { month: 'Şubat', currentYear: 182000, previousYear: 168000, growth: 8.3, formattedMonth: 'Şub' },
+      { month: 'Mart', currentYear: 208000, previousYear: 185000, growth: 12.4, formattedMonth: 'Mar' },
+      { month: 'Nisan', currentYear: 225000, previousYear: 199000, growth: 13.1, formattedMonth: 'Nis' },
+      { month: 'Mayıs', currentYear: 213000, previousYear: 192000, growth: 10.9, formattedMonth: 'May' },
+      { month: 'Haziran', currentYear: 199000, previousYear: 181000, growth: 9.9, formattedMonth: 'Haz' },
+      { month: 'Temmuz', currentYear: 235000, previousYear: 208000, growth: 13.0, formattedMonth: 'Tem' },
+      { month: 'Ağustos', currentYear: 244000, previousYear: 215000, growth: 13.5, formattedMonth: 'Ağu' },
+      { month: 'Eylül', currentYear: 257000, previousYear: 228000, growth: 12.7, formattedMonth: 'Eyl' },
+      { month: 'Ekim', currentYear: 249000, previousYear: 222000, growth: 12.2, formattedMonth: 'Eki' }
     ]
   })
 
   const handleDateChange = (newStartDate: string, newEndDate: string) => {
     setStartDate(newStartDate)
     setEndDate(newEndDate)
+    // Tarih değiştiğinde otomatik olarak veri güncelle
+    fetchDashboardDataWithDates(newStartDate, newEndDate)
   }
 
   const handleUpdate = () => {
@@ -239,43 +327,62 @@ function MainDashboard() {
     if (user) {
       fetchDashboardData()
     }
-  }, [user, startDate, endDate])
+  }, [user]) // user değiştiğinde veya component mount edildiğinde bir kez çağır
 
   if (loading || !data) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Yükleniyor...</div>
-      </div>
+      <PinebiLoader 
+        size="large" 
+        text="Dashboard verileri yükleniyor..." 
+        fullScreen={false}
+      />
     )
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="flex flex-col h-full">
       <DashboardHeader
-        title="Genel Rapor Özeti"
+        title="Genel Bakış"
         startDate={startDate}
         endDate={endDate}
         onDateChange={handleDateChange}
         onUpdate={handleUpdate}
+        isLiveData={isLiveData}
+        lastUpdate={lastUpdate}
       />
 
-      <KPICards data={data.kpiData} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <PaymentDistributionChart data={data.paymentDistribution} />
-        </div>
+      <KPICards data={data?.kpiData} loading={loading} />
         
-        <div className="lg:col-span-1">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+        <PaymentDistributionChart data={data.paymentDistribution} />
           <DailySalesChart data={data.dailySales} />
-        </div>
-        
-        <div className="lg:col-span-1">
           <TopCustomers data={data.topCustomers} />
-        </div>
       </div>
 
+      <div className="mb-6">
+          <CompanyPerformanceWidget 
+          title="Firma Performansı"
+          data={data.companyPerformance}
+          />
+        </div>
+        
+      <div className="flex-grow">
       <DailyGrid data={data.dailyGrid} />
+      </div>
+
+      {/* Yeni Grafikler - Dashboard'ın En Altı */}
+      <div className="mt-8 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <DailyTrendsChart 
+            data={data.dailySales} 
+            title="Günlük Satış Trendleri" 
+          />
+          <MonthlyComparisonChart 
+            data={data.monthlyComparison || []} 
+            title="Aylık Karşılaştırma" 
+          />
+        </div>
+      </div>
     </div>
   )
 }

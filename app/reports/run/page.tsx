@@ -319,20 +319,20 @@ export default function RunReportsPage() {
 
     try {
       // Parse report parameters configuration
-      let parameterConfig = {}
-      if (selectedReport.parameters) {
+      let parameterConfig: any = {}
+      if ((selectedReport as any).parameters) {
         try {
-          parameterConfig = JSON.parse(selectedReport.parameters)
+          parameterConfig = JSON.parse((selectedReport as any).parameters)
         } catch (e) {
           console.warn('Error parsing report parameters:', e)
         }
       }
 
       // Build request body dynamically based on parameter configuration
-      const requestBody = {
+      const requestBody: any = {
         apiUrl: selectedReport.endpointUrl,
         headers: {
-          ...JSON.parse(selectedReport.headers || '{}'),
+          ...JSON.parse((selectedReport as any).headers || '{}'),
           'Content-Type': 'application/json',
           'Authorization': `Basic ${Buffer.from(`${selectedReport.apiUsername}:${selectedReport.apiPassword}`).toString('base64')}`
         },
@@ -636,9 +636,9 @@ export default function RunReportsPage() {
         clickedClient: params.value,
         clickedFirma: params.data.Firma,
         clickedDate: params.data.Tarih,
-        selectedReport: selectedReport.name,
-        userId: user.id,
-        companyId: user.companyId
+        selectedReport: selectedReport?.name || '',
+        userId: user?.id || '',
+        companyId: user?.companyId || ''
       })
 
       // Find the "Kasa Seçimli Rapor" report (check both IDs) with filtering rules
