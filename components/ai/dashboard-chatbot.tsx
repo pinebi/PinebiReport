@@ -44,17 +44,11 @@ export function DashboardChatbot() {
   const [dashboardData, setDashboardData] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  // Initial welcome message based on user's company
-  const getWelcomeMessage = () => {
-    const firmaName = user?.role === 'ADMIN' ? 'RMK' : (user?.company?.name || 'RMK');
-    return `Merhaba! 👋 Size nasıl yardımcı olabilirim?\n\n${firmaName} firması için dashboard verileriniz, raporlar veya analizler hakkında soru sorabilirsiniz.`;
-  };
-
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
-      content: getWelcomeMessage(),
+      content: 'Merhaba! 👋 Size nasıl yardımcı olabilirim?',
       timestamp: new Date()
     }
   ]);
@@ -64,6 +58,23 @@ export function DashboardChatbot() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Update welcome message when user is loaded
+  useEffect(() => {
+    if (user && messages.length === 1) {
+      const firmaName = user?.role === 'ADMIN' ? 'RMK' : (user?.company?.name || 'RMK');
+      const welcomeMessage = `Merhaba! 👋 Size nasıl yardımcı olabilirim?\n\n${firmaName} firması için dashboard verileriniz, raporlar veya analizler hakkında soru sorabilirsiniz.`;
+      
+      setMessages([{
+        id: '1',
+        role: 'assistant',
+        content: welcomeMessage,
+        timestamp: new Date()
+      }]);
+      
+      console.log('🤖 AI Chatbot - Welcome message updated for company:', firmaName);
+    }
+  }, [user]);
 
   // Dashboard verilerini çek
   useEffect(() => {
