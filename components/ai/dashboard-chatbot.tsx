@@ -263,25 +263,212 @@ export function DashboardChatbot() {
         response = `⏳ ${firmaName} için performans verileri yükleniyor...\n\nLütfen birkaç saniye bekleyin ve tekrar deneyin.`;
       }
     }
-    // Yardım
-    else if (lowerQuery.includes('yardım') || lowerQuery.includes('help')) {
-      response = '❓ Size yardımcı olabileceğim konular:\n\n' +
-                 '• 📊 Satış ve ciro bilgileri\n' +
-                 '• 📈 Performans analizi\n' +
-                 '• 📄 Excel rapor oluşturma\n' +
-                 '• 🏆 Ürün ve müşteri analizleri\n' +
-                 '• 📅 Dönemsel karşılaştırmalar\n' +
-                 '• 🎯 Hedef takibi\n\n' +
-                 'Örnek: "Bugünkü satışlar nasıl?" veya "Excel rapor oluştur"';
+    // Nakit satışlar
+    else if (lowerQuery.includes('nakit')) {
+      if (kpiData) {
+        const nakitOran = ((kpiData.nakit / kpiData.toplamCiro) * 100).toFixed(1);
+        response = `💵 ${firmaName} - Nakit Satışlar:\n\n` +
+                   `• Toplam nakit: ${formatCurrency(kpiData.nakit)}\n` +
+                   `• Toplam ciro içindeki payı: %${nakitOran}\n\n`;
+        
+        if (parseFloat(nakitOran) > 50) {
+          response += '✅ Nakit satışlarınız güçlü! 💪';
+        } else {
+          response += '📊 Nakit satışlarınız dengelenmiş durumda.';
+        }
+      } else {
+        response = `⏳ ${firmaName} için veriler yükleniyor...`;
+      }
     }
-    // Default response
+    // Kredi kartı satışlar
+    else if (lowerQuery.includes('kredi') || lowerQuery.includes('kart')) {
+      if (kpiData) {
+        const kartOran = ((kpiData.krediKarti / kpiData.toplamCiro) * 100).toFixed(1);
+        response = `💳 ${firmaName} - Kredi Kartı Satışlar:\n\n` +
+                   `• Toplam kredi kartı: ${formatCurrency(kpiData.krediKarti)}\n` +
+                   `• Toplam ciro içindeki payı: %${kartOran}\n\n` +
+                   '💡 Kredi kartı ile satışlarınız güvenli ve takip edilebilir.';
+      } else {
+        response = `⏳ ${firmaName} için veriler yükleniyor...`;
+      }
+    }
+    // Açık hesap
+    else if (lowerQuery.includes('açık') || lowerQuery.includes('acik') || lowerQuery.includes('hesap')) {
+      if (kpiData) {
+        const acikHesapOran = ((kpiData.acikHesap / kpiData.toplamCiro) * 100).toFixed(1);
+        response = `📋 ${firmaName} - Açık Hesap Satışlar:\n\n` +
+                   `• Toplam açık hesap: ${formatCurrency(kpiData.acikHesap)}\n` +
+                   `• Toplam ciro içindeki payı: %${acikHesapOran}\n\n`;
+        
+        if (parseFloat(acikHesapOran) > 30) {
+          response += '⚠️ Açık hesap oranı yüksek. Tahsilatlara dikkat edin!';
+        } else {
+          response += '✅ Açık hesap oranınız dengeli.';
+        }
+      } else {
+        response = `⏳ ${firmaName} için veriler yükleniyor...`;
+      }
+    }
+    // Toplam ciro
+    else if (lowerQuery.includes('ciro') || lowerQuery.includes('toplam')) {
+      if (kpiData) {
+        response = `💰 ${firmaName} - Toplam Ciro:\n\n` +
+                   `• Genel Toplam: ${formatCurrency(kpiData.toplamCiro)}\n\n` +
+                   `Detay:\n` +
+                   `• Nakit: ${formatCurrency(kpiData.nakit)} (%${((kpiData.nakit / kpiData.toplamCiro) * 100).toFixed(1)})\n` +
+                   `• Kredi Kartı: ${formatCurrency(kpiData.krediKarti)} (%${((kpiData.krediKarti / kpiData.toplamCiro) * 100).toFixed(1)})\n` +
+                   `• Açık Hesap: ${formatCurrency(kpiData.acikHesap)} (%${((kpiData.acikHesap / kpiData.toplamCiro) * 100).toFixed(1)})\n\n` +
+                   '🎉 Harika bir performans!';
+      } else {
+        response = `⏳ ${firmaName} için veriler yükleniyor...`;
+      }
+    }
+    // En iyi müşteri
+    else if (lowerQuery.includes('en iyi') || lowerQuery.includes('en çok') || lowerQuery.includes('top')) {
+      if (topCustomers && topCustomers.length > 0) {
+        const topCustomer = topCustomers[0];
+        response = `🏆 ${firmaName} - En İyi Müşteri:\n\n` +
+                   `👑 ${topCustomer.name}\n` +
+                   `💰 Toplam: ${formatCurrency(topCustomer.amount)}\n\n` +
+                   `Diğer top 3:\n`;
+        
+        topCustomers.slice(1, 3).forEach((customer: any, index: number) => {
+          response += `${index + 2}. ${customer.name} - ${formatCurrency(customer.amount)}\n`;
+        });
+        
+        response += '\n✨ Bu müşterilerinizi koruyun!';
+      } else {
+        response = `⏳ ${firmaName} için müşteri verileri yükleniyor...`;
+      }
+    }
+    // Grafik göster
+    else if (lowerQuery.includes('grafik') || lowerQuery.includes('chart')) {
+      response = '📊 Hangi grafikleri görmek istersiniz?\n\n' +
+                 '• Günlük satışlar\n' +
+                 '• Ödeme dağılımı\n' +
+                 '• Aylık karşılaştırma\n' +
+                 '• Firma performansı\n\n' +
+                 'Dashboard sayfasında tüm grafikleri görebilirsiniz!';
+      actions = [
+        {
+          label: 'Dashboard\'a Git',
+          action: () => window.location.href = '/'
+        }
+      ];
+    }
+    // Tarih sorgulama
+    else if (lowerQuery.includes('dün') || lowerQuery.includes('yesterday')) {
+      response = `📅 ${firmaName} - Dünün verileri:\n\n` +
+                 `Tarih filtresini değiştirerek dünün verilerini görebilirsiniz.\n\n` +
+                 '💡 Dashboard\'da tarih aralığını seçin!';
+      actions = [
+        {
+          label: 'Dashboard\'a Git',
+          action: () => window.location.href = '/'
+        }
+      ];
+    }
+    // Karşılaştırma
+    else if (lowerQuery.includes('karşılaştır') || lowerQuery.includes('compare')) {
+      response = '📊 Karşılaştırma Modu:\n\n' +
+                 'İki dönemi yan yana karşılaştırabilirsiniz!\n\n' +
+                 '• Farklı ayları karşılaştırın\n' +
+                 '• Yılları karşılaştırın\n' +
+                 '• Grafik ile görselleştirin';
+      actions = [
+        {
+          label: 'Karşılaştırma Sayfası',
+          action: () => window.location.href = '/comparison'
+        }
+      ];
+    }
+    // Rapor tasarımcı
+    else if (lowerQuery.includes('tasarım') || lowerQuery.includes('designer')) {
+      response = '🎨 Rapor Tasarımcı:\n\n' +
+                 'Kendi özel raporlarınızı oluşturun!\n\n' +
+                 '• Widget seçin\n' +
+                 '• Grafikler ekleyin\n' +
+                 '• Kaydedin ve paylaşın';
+      actions = [
+        {
+          label: 'Rapor Tasarımcı',
+          action: () => window.location.href = '/report-designer'
+        }
+      ];
+    }
+    // Selam, merhaba
+    else if (lowerQuery.includes('merhaba') || lowerQuery.includes('selam') || lowerQuery.includes('hello') || lowerQuery.includes('hi')) {
+      const saatler = new Date().getHours();
+      let selamlama = 'Merhaba';
+      if (saatler < 12) selamlama = 'Günaydın';
+      else if (saatler < 18) selamlama = 'İyi günler';
+      else selamlama = 'İyi akşamlar';
+      
+      response = `${selamlama}! 👋\n\n` +
+                 `${firmaName} dashboard asistanınız olarak size yardımcı olmak için buradayım! 🤖\n\n` +
+                 'Size nasıl yardımcı olabilirim?';
+    }
+    // Teşekkür
+    else if (lowerQuery.includes('teşekkür') || lowerQuery.includes('tesekkur') || lowerQuery.includes('sağol') || lowerQuery.includes('sagol') || lowerQuery.includes('thanks')) {
+      response = 'Rica ederim! 😊\n\nBaşka bir konuda yardımcı olabilirsem lütfen çekinmeyin!';
+    }
+    // Nasılsın
+    else if (lowerQuery.includes('nasıl') || lowerQuery.includes('how are you')) {
+      response = `Ben harikayım, teşekkürler! 🤖✨\n\n${firmaName} için verilerinizi analiz etmeye hazırım. Size nasıl yardımcı olabilirim?`;
+    }
+    // Kim
+    else if (lowerQuery.includes('kimsin') || lowerQuery.includes('kim') || lowerQuery.includes('who are you')) {
+      response = `Ben ${firmaName} Dashboard AI Asistanınızım! 🤖\n\n` +
+                 'Size şunlarda yardımcı olabilirim:\n' +
+                 '• 📊 Satış ve ciro analizi\n' +
+                 '• 👥 Müşteri raporları\n' +
+                 '• 📈 Performans takibi\n' +
+                 '• 📄 Excel raporları\n' +
+                 '• 🎯 İş analizleri\n\n' +
+                 'Soru sormaktan çekinmeyin!';
+    }
+    // Yardım
+    else if (lowerQuery.includes('yardım') || lowerQuery.includes('help') || lowerQuery.includes('ne yapabilirsin')) {
+      response = '❓ Size yardımcı olabileceğim konular:\n\n' +
+                 '📊 **Satış Bilgileri:**\n' +
+                 '• "Bugünkü satışlar nasıl?"\n' +
+                 '• "Toplam ciro ne kadar?"\n' +
+                 '• "Nakit satışlar ne kadar?"\n\n' +
+                 '👥 **Müşteri Analizi:**\n' +
+                 '• "En iyi müşteriler kimler?"\n' +
+                 '• "Müşteri listesi"\n\n' +
+                 '📈 **Performans:**\n' +
+                 '• "Firma performansı nasıl?"\n' +
+                 '• "Bu hafta nasıl gitti?"\n\n' +
+                 '📄 **Raporlar:**\n' +
+                 '• "Excel rapor oluştur"\n' +
+                 '• "Rapor çalıştır"\n\n' +
+                 '💬 Sohbet edebilir, soru sorabilirsiniz!';
+    }
+    // Default response - Daha akıllı
     else {
-      response = '🤔 Bu konuda size yardımcı olmak isterim!\n\n' +
-                 'Şu anda şunları yapabilirim:\n' +
-                 '• Satış ve ciro sorgulama\n' +
-                 '• Rapor oluşturma\n' +
-                 '• Karşılaştırma ve analiz\n\n' +
-                 'Lütfen daha spesifik bir soru sorun veya "yardım" yazın.';
+      // Soru mu soruyor?
+      const isSoru = lowerQuery.includes('?') || 
+                     lowerQuery.includes('nasıl') || 
+                     lowerQuery.includes('ne') || 
+                     lowerQuery.includes('kim') || 
+                     lowerQuery.includes('nerede') || 
+                     lowerQuery.includes('kaç') || 
+                     lowerQuery.includes('hangi');
+      
+      if (isSoru) {
+        response = `🤔 "${query}" hakkında size yardımcı olmak isterim!\n\n` +
+                   `Şu konularda size daha iyi yardımcı olabilirim:\n\n` +
+                   `• 📊 Satışlar ve ciro\n` +
+                   `• 👥 Müşteri analizleri\n` +
+                   `• 📈 Firma performansı\n` +
+                   `• 📄 Rapor oluşturma\n\n` +
+                   `Örnek: "Bugünkü satışlar nasıl?" veya "En iyi müşteriler kimler?"`;
+      } else {
+        response = `💬 "${query}"\n\n` +
+                   `Anladım! Size nasıl yardımcı olabilirim?\n\n` +
+                   `"yardım" yazarak neler yapabileceğimi öğrenebilirsiniz. 😊`;
+      }
     }
 
     return { response, actions };
