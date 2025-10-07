@@ -219,10 +219,6 @@ export async function GET(request: NextRequest) {
 
 async function processDashboardData(rawData: any, monthlyReport: any, request: NextRequest) {
   try {
-    console.log('Processing dashboard data...')
-    console.log('Raw data type:', typeof rawData)
-    console.log('Raw data keys:', rawData ? Object.keys(rawData) : 'No keys')
-    
     // Pinebi API'den gelen veri formatını işle
     let dataArray = null
     
@@ -239,11 +235,8 @@ async function processDashboardData(rawData: any, monthlyReport: any, request: N
       dataArray = rawData
     }
     
-    console.log('Processed data array:', dataArray)
-    console.log('Data array length:', dataArray ? dataArray.length : 0)
-    
     if (!dataArray || !Array.isArray(dataArray)) {
-      console.log('No valid data array found, using mock data')
+      console.log('⚠️ No valid data array, using mock data')
       const defaultStartDate = new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]
       const defaultEndDate = new Date().toISOString().split('T')[0]
       return getMockDashboardData(defaultStartDate, defaultEndDate, 'RMK')
@@ -363,7 +356,7 @@ async function processDashboardData(rawData: any, monthlyReport: any, request: N
       }))
       .sort((a, b) => b.averageRevenue - a.averageRevenue)
     
-    console.log('🔍 Customer Revenue Data:', customerRevenueData)
+    // console.log('🔍 Customer Revenue Data:', customerRevenueData)
     
     return {
       kpiData,
@@ -757,7 +750,7 @@ function generateCompanyGridSummary(dataArray: any[]) {
   const summaryArray = Object.values(firmaSummary)
     .sort((a: any, b: any) => b.GENEL_TOPLAM - a.GENEL_TOPLAM)
   
-  console.log('📊 Company Grid Summary:', summaryArray)
+  // console.log('📊 Company Grid Summary:', summaryArray)
   
   return summaryArray
 }
