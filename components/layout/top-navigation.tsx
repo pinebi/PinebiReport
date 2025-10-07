@@ -27,7 +27,10 @@ import {
   Palette,
   TestTube,
   Activity,
-  Gauge
+  Gauge,
+  Sparkles,
+  Shuffle,
+  PencilRuler
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { clsx } from 'clsx'
@@ -182,6 +185,31 @@ const getStaticMenuItems = (): Omit<MenuItem, 'icon'>[] => [
         href: '/data-sources'
       }
     ]
+  },
+  {
+    id: 'new-features',
+    label: 'Yeni Özellikler',
+    href: '',
+    children: [
+      {
+        id: 'comparison',
+        label: 'Karşılaştırma Modu',
+        href: '/comparison',
+        icon: '📊'
+      },
+      {
+        id: 'report-designer',
+        label: 'Rapor Tasarımcı',
+        href: '/report-designer',
+        icon: '🎨'
+      },
+      {
+        id: 'theme-custom',
+        label: 'Tema Kişiselleştirme',
+        href: '/theme-custom',
+        icon: '🎨'
+      }
+    ]
   }
 ]
 
@@ -220,6 +248,10 @@ export function TopNavigation() {
       case 'api-config': return <Settings className="w-4 h-4" />
       case 'data-sources': return <Database className="w-4 h-4" />
       case 'settings': return <Settings className="w-4 h-4" />
+      case 'new-features': return <Sparkles className="w-4 h-4" />
+      case 'comparison': return <Shuffle className="w-4 h-4" />
+      case 'report-designer': return <PencilRuler className="w-4 h-4" />
+      case 'theme-custom': return <Palette className="w-4 h-4" />
       default: return <FileText className="w-4 h-4" />
     }
   }
