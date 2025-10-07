@@ -88,25 +88,25 @@ export function CompanyPerformanceWidget({
 
   return (
     <Card className="w-full">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-lg font-semibold">
-          <BarChart3 className="h-5 w-5 text-blue-600" />
+      <CardHeader className="pb-2">
+        <CardTitle className="flex items-center gap-2 text-base font-semibold">
+          <BarChart3 className="h-4 w-4 text-blue-600" />
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-2">
         {sortedData.map((company, index) => (
-          <div key={company.company} className="space-y-3">
+          <div key={company.company} className="space-y-1.5">
             {/* Company Header */}
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl">{getCompanyIcon(company.company)}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">{getCompanyIcon(company.company)}</span>
                 <div>
-                  <div className="font-medium text-gray-900 dark:text-white">
+                  <div className="text-sm font-medium text-gray-900 dark:text-white">
                     {company.company}
                   </div>
                   {showDetails && (
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                    <div className="text-xs text-gray-600 dark:text-gray-400">
                       {formatCurrency(company.revenue)} • {company.customers} müşteri
                     </div>
                   )}
@@ -115,11 +115,11 @@ export function CompanyPerformanceWidget({
               
               {/* Market Share */}
               <div className="text-right">
-                <div className="text-lg font-bold text-blue-600">
+                <div className="text-base font-bold text-blue-600">
                   {company.marketShare.toFixed(1)}%
                 </div>
                 {showDetails && (
-                  <div className="text-xs text-gray-500">
+                  <div className="text-[10px] text-gray-500">
                     Pazar Payı
                   </div>
                 )}
@@ -127,10 +127,10 @@ export function CompanyPerformanceWidget({
             </div>
 
             {/* Progress Bar */}
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Progress 
                 value={company.marketShare} 
-                className="h-2"
+                className="h-1.5"
                 // Custom progress bar styling
                 style={{
                   '--progress-background': '#e5e7eb',
@@ -140,20 +140,20 @@ export function CompanyPerformanceWidget({
               
               {/* Performance Indicators */}
               {showDetails && (
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <div className="flex items-center gap-4">
+                <div className="flex items-center justify-between text-[10px] text-gray-500">
+                  <div className="flex items-center gap-3">
                     <div className="flex items-center gap-1">
-                      <Users className="h-3 w-3 text-blue-600" />
+                      <Users className="h-2.5 w-2.5 text-blue-600" />
                       <span className="font-medium">{company.customers} müşteri</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <DollarSign className="h-3 w-3 text-green-600" />
+                      <DollarSign className="h-2.5 w-2.5 text-green-600" />
                       <span>₺{company.customers > 0 ? (company.revenue / company.customers).toFixed(0) : '0'}/müşteri</span>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3 text-purple-600" />
+                    <TrendingUp className="h-2.5 w-2.5 text-purple-600" />
                     <span>#{index + 1} Sıra</span>
                   </div>
                 </div>
@@ -162,28 +162,28 @@ export function CompanyPerformanceWidget({
 
             {/* Separator */}
             {index < sortedData.length - 1 && (
-              <div className="border-t border-gray-100 dark:border-gray-700"></div>
+              <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
             )}
           </div>
         ))}
 
         {/* Summary Stats */}
         {showDetails && (
-          <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="grid grid-cols-2 gap-4 text-center">
+          <div className="mt-3 pt-2 border-t border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-2 gap-3 text-center">
               <div>
-                <div className="text-2xl font-bold text-blue-600">
+                <div className="text-lg font-bold text-blue-600">
                   {sortedData.length}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-[10px] text-gray-600 dark:text-gray-400">
                   Toplam Şirket
                 </div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-lg font-bold text-green-600">
                   {formatCurrency(sortedData.reduce((sum, c) => sum + c.revenue, 0))}
                 </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
+                <div className="text-[10px] text-gray-600 dark:text-gray-400">
                   Toplam Ciro
                 </div>
               </div>

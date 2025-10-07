@@ -55,6 +55,7 @@ interface ReportWithCategory {
   showInMenu?: boolean
   isActive?: boolean
   companyId?: string
+  reportUsers?: Array<{ id: string; userId: string; reportId: string }>
 }
 
 // Static menu items without JSX icons to avoid re-render issues
@@ -259,8 +260,18 @@ export function TopNavigation() {
         // Don't auto-expand categories - keep menus closed by default
 
         // Load reports with retry + cache
-        const reportsData = await fetchWithRetry('/api/report-configs', 'cache-report-configs') || { reports: [] }
+        // Include user parameters for proper filtering
+        const userParams = user?.id && user?.companyId && user?.role 
+          ? `?companyId=${user.companyId}&userId=${user.id}&userRole=${user.role}`
+          : ''
+        
+        // Clear cache when user changes to ensure fresh data
+        const cacheKey = `cache-report-configs-${user?.id}`
+        const reportsData = await fetchWithRetry(`/api/report-configs${userParams}`, cacheKey) || { reports: [] }
         const reportsWithMenuStatus = reportsData.reports?.map((report: any) => report) || []
+        
+        console.log('📊 Navigation reports loaded:', reportsWithMenuStatus.length, 'reports')
+        console.log('📊 User params:', { companyId: user?.companyId, userId: user?.id, role: user?.role })
         
         if (Array.isArray(reportsWithMenuStatus)) setReports(reportsWithMenuStatus)
       } catch (error) {
@@ -341,7 +352,7 @@ export function TopNavigation() {
               .map(category => {
                 // Get reports for this category and its children
                 const categoryReports = reports.filter(report => {
-                  // Only show active reports that are marked to show in menu
+                  // Only show active reports with showInMenu
                   if (!report.isActive) return false
                   if (report.showInMenu === false) return false
                   
@@ -351,19 +362,24 @@ export function TopNavigation() {
                   
                   if (!belongsToCategory) return false
                   
-                  // For REPORTER users, show all reports regardless of company
-                  if (user?.role === 'REPORTER') {
-                    return true
-                  }
-                  
                   // Admin can see all reports (no company filtering)
                   if (user?.role === 'ADMIN') {
                     return true
                   }
                   
-                  // Regular users can only see reports from their company
+                  // For REPORTER users, show company reports + assigned reports
+                  if (user?.role === 'REPORTER') {
+                    const isCompanyMatch = user?.companyId && report.companyId && user.companyId === report.companyId
+                    const isUserAssigned = (report as any).reportUsers?.some((ru: any) => ru.userId === user.id)
+                    return isCompanyMatch || isUserAssigned
+                  }
+                  
+                  // Regular users: check company + user assignment
                   if (user?.companyId && report.companyId && user.companyId === report.companyId) {
-                    return true
+                    // Also check if user is assigned to this report (reportUsers)
+                    const isUserAssigned = (report as any).reportUsers?.some((ru: any) => ru.userId === user.id)
+                    console.log(`🔍 Report "${report.name}": Company match ✅, User assigned: ${isUserAssigned ? '✅' : '❌'} (reportUsers: ${JSON.stringify((report as any).reportUsers?.map((ru: any) => ru.userId))})`)
+                    return isUserAssigned === true
                   }
                   
                   return false
@@ -423,7 +439,7 @@ export function TopNavigation() {
               .map(category => {
                 // Get reports for this category and its children
                 const categoryReports = reports.filter(report => {
-                  // Only show active reports that are marked to show in menu
+                  // Only show active reports with showInMenu
                   if (!report.isActive) return false
                   if (report.showInMenu === false) return false
                   
@@ -433,19 +449,24 @@ export function TopNavigation() {
                   
                   if (!belongsToCategory) return false
                   
-                  // For REPORTER users, show all reports regardless of company
-                  if (user?.role === 'REPORTER') {
-                    return true
-                  }
-                  
                   // Admin can see all reports (no company filtering)
                   if (user?.role === 'ADMIN') {
                     return true
                   }
                   
-                  // Regular users can only see reports from their company
+                  // For REPORTER users, show company reports + assigned reports
+                  if (user?.role === 'REPORTER') {
+                    const isCompanyMatch = user?.companyId && report.companyId && user.companyId === report.companyId
+                    const isUserAssigned = (report as any).reportUsers?.some((ru: any) => ru.userId === user.id)
+                    return isCompanyMatch || isUserAssigned
+                  }
+                  
+                  // Regular users: check company + user assignment
                   if (user?.companyId && report.companyId && user.companyId === report.companyId) {
-                    return true
+                    // Also check if user is assigned to this report (reportUsers)
+                    const isUserAssigned = (report as any).reportUsers?.some((ru: any) => ru.userId === user.id)
+                    console.log(`🔍 Report "${report.name}": Company match ✅, User assigned: ${isUserAssigned ? '✅' : '❌'} (reportUsers: ${JSON.stringify((report as any).reportUsers?.map((ru: any) => ru.userId))})`)
+                    return isUserAssigned === true
                   }
                   
                   return false

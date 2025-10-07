@@ -121,3 +121,9 @@ export default function TabulatorView({ data, title = 'Tablo' }: TabulatorViewPr
 
 
 
+
+
+
+
+
+

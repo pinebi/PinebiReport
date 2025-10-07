@@ -38,10 +38,14 @@ export default function ReportsPage() {
     const ensureFormRefs = async () => {
       if (!showForm) return
       try {
+        // Get auth token from localStorage
+        const token = localStorage.getItem('token')
+        const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {}
+        
         const tasks: Promise<any>[] = []
-        if (companies.length === 0) tasks.push(fetch('/api/companies').then(r => r.ok ? r.json() : { companies: [] }).then(j => setCompanies(j.companies || [])))
-        if (users.length === 0) tasks.push(fetch('/api/users').then(r => r.ok ? r.json() : { users: [] }).then(j => setUsers(j.users || [])))
-        if (categories.length === 0) tasks.push(fetch('/api/report-categories').then(r => r.ok ? r.json() : { categories: [] }).then(j => setCategories(j.categories || [])))
+        if (companies.length === 0) tasks.push(fetch('/api/companies', { headers: authHeaders }).then(r => r.ok ? r.json() : { companies: [] }).then(j => setCompanies(j.companies || [])))
+        if (users.length === 0) tasks.push(fetch('/api/users', { headers: authHeaders }).then(r => r.ok ? r.json() : { users: [] }).then(j => setUsers(j.users || [])))
+        if (categories.length === 0) tasks.push(fetch('/api/report-categories', { headers: authHeaders }).then(r => r.ok ? r.json() : { categories: [] }).then(j => setCategories(j.categories || [])))
         if (tasks.length) await Promise.all(tasks)
       } catch (e) {
         console.warn('ensureFormRefs error:', e)
@@ -55,11 +59,15 @@ export default function ReportsPage() {
     try {
       console.log('🔄 Loading reports data...')
       
+      // Get auth token from localStorage
+      const token = localStorage.getItem('token')
+      const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {}
+      
       const [reportsResponse, companiesResponse, usersResponse, categoriesResponse] = await Promise.all([
-        fetch('/api/report-configs'),
-        fetch('/api/companies'),
-        fetch('/api/users'),
-        fetch('/api/report-categories')
+        fetch('/api/report-configs', { headers: authHeaders }),
+        fetch('/api/companies', { headers: authHeaders }),
+        fetch('/api/users', { headers: authHeaders }),
+        fetch('/api/report-categories', { headers: authHeaders })
       ])
       
       console.log('📊 API Responses:', {
@@ -100,14 +108,18 @@ export default function ReportsPage() {
       console.log('📋 Reports data:', reportsData)
       console.log('📊 Reports count:', reportsData.reports?.length || 0)
       
-      // Filter reports based on user role and company
+      // Filter reports based on user role, company, user assignment and showInMenu
       let filteredReports = reportsData?.reports || []
       
       if (user?.role !== 'ADMIN') {
-        // Non-admin users can only see active reports from their company
-        filteredReports = filteredReports.filter((report: ReportConfig) => 
-          report.isActive && user?.companyId && report.companyId && user.companyId === report.companyId
-        )
+        // Non-admin users: company + user assignment + active (showInMenu not required for management page)
+        filteredReports = filteredReports.filter((report: any) => {
+          const isActive = report.isActive
+          const isCompanyMatch = user?.companyId && report.companyId && user.companyId === report.companyId
+          const isUserAssigned = report.reportUsers?.some((ru: any) => ru.userId === user.id)
+          
+          return isActive && isCompanyMatch && isUserAssigned
+        })
         console.log(`🔍 Filtered reports for user ${user?.username} (${user?.role}):`, filteredReports.length)
       } else {
         // Admin users see all reports (including inactive ones for management)
@@ -381,6 +393,7 @@ export default function ReportsPage() {
       endpointUrl: formData.get('endpointUrl') as string,
       apiUsername: 'PINEBI', // Sabit API kullanıcı adı
       apiPassword: 'q81ymAbtx1jJ8hoc8IPU79LjPemuXjok2NXYRTa51', // Sabit API şifresi
+      apiUserId: formData.get('apiUserId') as string || null, // API User ID
       headers: JSON.stringify(headersObject),
       parameters: formData.get('parameters') as string || null,
       categoryId: formData.get('categoryId') as string,
@@ -528,6 +541,19 @@ export default function ReportsPage() {
               </div>
 
               <div>
+                <Label htmlFor="apiUserId">API User ID (Dashboard için)</Label>
+                <Input 
+                  id="apiUserId" 
+                  name="apiUserId" 
+                  placeholder="df51ad80-ef0b-4cc8-a941-be7a6ca638d9"
+                  defaultValue={editingReport?.apiUserId || ''}
+                />
+                <p className="text-sm text-gray-500 mt-1">
+                  Dashboard'da kullanılacak API User ID. Boş bırakılırsa default kullanılır.
+                </p>
+              </div>
+
+              <div>
                 <Label htmlFor="headerInfo">Rapor Endpoint URL</Label>
                 <Input 
                   id="headerInfo"
@@ -655,7 +681,7 @@ export default function ReportsPage() {
                     type="checkbox"
                     id="showInMenu"
                     name="showInMenu"
-                    defaultChecked={(editingReport as any)?.showInMenu !== false}
+                    defaultChecked={editingReport?.showInMenu !== false}
                     className="mt-6 h-4 w-4"
                   />
                   <Label htmlFor="showInMenu" className="mt-6">Menüde Gösterilsin</Label>
@@ -703,6 +729,11 @@ export default function ReportsPage() {
               className="pl-10 w-64"
             />
           </div>
+          <Link href="/reports/dashboard2_rapor">
+            <Button variant="outline">
+              Dashboard2_Rapor
+            </Button>
+          </Link>
           <Button onClick={handleAdd} className="bg-blue-600 hover:bg-blue-700">
             <Plus className="w-4 h-4 mr-2" />
             Rapor Ekle

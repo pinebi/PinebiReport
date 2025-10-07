@@ -83,6 +83,7 @@ model ReportConfig {
   endpointUrl  String
   apiUsername  String
   apiPassword  String
+  apiUserId    String?              // API USER ID (opsiyonel)
   headers      String?
   categoryId   String
   companyId    String
@@ -93,6 +94,7 @@ model ReportConfig {
   menuGroup    String?
   menuOrder    Int?                 @default(0)
   parameters   String?
+  showInMenu   Boolean              @default(true)  // Menüde gösterilsin mi?
   category     ReportCategory       @relation(fields: [categoryId], references: [id], onUpdate: NoAction)
   company      Company              @relation(fields: [companyId], references: [id], onUpdate: NoAction)
   user         User                 @relation(fields: [userId], references: [id], onUpdate: NoAction)

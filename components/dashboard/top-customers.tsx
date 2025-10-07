@@ -13,9 +13,11 @@ interface CustomerData {
 interface TopCustomersProps {
   data: CustomerData[]
   title?: string
+  limit?: number
 }
 
-export function TopCustomers({ data = [], title = "Ürün Satışı Top 10" }: TopCustomersProps) {
+export function TopCustomers({ data = [], title, limit = 10 }: TopCustomersProps) {
+  const displayTitle = title || `Ürün Satışı Top ${limit}`
   // Default data if none provided
   const defaultData = [
     { name: 'ABC Şirketi', amount: 45000, rank: 1, change: 12 },
@@ -25,7 +27,7 @@ export function TopCustomers({ data = [], title = "Ürün Satışı Top 10" }: T
     { name: 'JKL Grup', amount: 25000, rank: 5, change: -2 }
   ]
 
-  const customerData = data && data.length > 0 ? data : defaultData
+  const customerData = (data && data.length > 0 ? data : defaultData).slice(0, limit)
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('tr-TR', {
       style: 'currency',
@@ -44,7 +46,7 @@ export function TopCustomers({ data = [], title = "Ürün Satışı Top 10" }: T
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+        <CardTitle className="text-lg font-semibold">{displayTitle}</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-3">

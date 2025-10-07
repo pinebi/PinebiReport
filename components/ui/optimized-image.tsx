@@ -1,22 +1,15 @@
 'use client'
 
-import Image from 'next/image'
-import { useState } from 'react'
-import { clsx } from 'clsx'
-import { Skeleton } from './skeleton-loader'
+import React from 'react'
+import { usePerformance } from '@/hooks/use-performance'
 
 interface OptimizedImageProps {
   src: string
   alt: string
   width?: number
   height?: number
-  className?: string
-  priority?: boolean
   quality?: number
-  placeholder?: 'blur' | 'empty'
-  blurDataURL?: string
-  fill?: boolean
-  sizes?: string
+  className?: string
 }
 
 export function OptimizedImage({
@@ -24,116 +17,27 @@ export function OptimizedImage({
   alt,
   width,
   height,
-  className,
-  priority = false,
-  quality = 75,
-  placeholder = 'empty',
-  blurDataURL,
-  fill = false,
-  sizes
-}: OptimizedImageProps) {
-  const [isLoading, setIsLoading] = useState(true)
-  const [hasError, setHasError] = useState(false)
+  quality = 80,
+  className = '',
+  ...props
+}: OptimizedImageProps & React.ImgHTMLAttributes<HTMLImageElement>) {
+  const { optimizeImage, useLazyLoad } = usePerformance()
+  const { elementRef, isVisible } = useLazyLoad()
 
-  if (hasError) {
-    return (
-      <div 
-        className={clsx(
-          'bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-gray-400 dark:text-gray-500',
-          className
-        )}
-        style={fill ? undefined : { width, height }}
-      >
-        <span className="text-xs">Resim yüklenemedi</span>
-      </div>
-    )
-  }
+  const optimizedSrc = optimizeImage(src, { width, height, quality })
 
   return (
-    <div className={clsx('relative', className)}>
-      {isLoading && (
-        <div className="absolute inset-0 z-10">
-          <Skeleton 
-            variant="rectangular" 
-            width={fill ? '100%' : width} 
-            height={fill ? '100%' : height}
-            className="rounded-lg"
-          />
-        </div>
-      )}
-      
-      <Image
-        src={src}
-        alt={alt}
-        width={fill ? undefined : width}
-        height={fill ? undefined : height}
-        fill={fill}
-        priority={priority}
-        quality={quality}
-        placeholder={placeholder}
-        blurDataURL={blurDataURL}
-        sizes={sizes}
-        className={clsx(
-          'transition-opacity duration-300',
-          isLoading ? 'opacity-0' : 'opacity-100',
-          className
-        )}
-        onLoad={() => setIsLoading(false)}
-        onError={() => {
-          setIsLoading(false)
-          setHasError(true)
-        }}
-      />
-    </div>
-  )
-}
-
-// Avatar component with optimization
-interface OptimizedAvatarProps {
-  src?: string
-  alt: string
-  size?: number
-  className?: string
-  fallback?: string
-}
-
-export function OptimizedAvatar({ 
-  src, 
-  alt, 
-  size = 40, 
-  className,
-  fallback 
-}: OptimizedAvatarProps) {
-  const [hasError, setHasError] = useState(false)
-  
-  const displaySrc = hasError || !src ? null : src
-  const displayFallback = fallback || alt.charAt(0).toUpperCase()
-
-  return (
-    <div 
-      className={clsx(
-        'relative rounded-full overflow-hidden bg-blue-500 flex items-center justify-center text-white font-medium',
-        className
-      )}
-      style={{ width: size, height: size }}
-    >
-      {displaySrc ? (
-        <OptimizedImage
-          src={displaySrc}
+    <div ref={elementRef} className={className}>
+      {isVisible && (
+        <img
+          src={optimizedSrc}
           alt={alt}
-          width={size}
-          height={size}
-          className="rounded-full"
-          quality={90}
+          width={width}
+          height={height}
+          loading="lazy"
+          {...props}
         />
-      ) : (
-        <span className="text-sm" style={{ fontSize: size * 0.4 }}>
-          {displayFallback}
-        </span>
       )}
     </div>
   )
 }
-
-
-

@@ -25,15 +25,16 @@ export default function HomePage() {
   }, [user, isLoading, mounted, router])
 
   // Loading durumunda
-  if (!mounted || isLoading) {
-    return (
-      <PinebiLoader 
-        size="large" 
-        text="Sistem başlatılıyor..." 
-        fullScreen={true}
-      />
-    )
-  }
+    if (!mounted || isLoading) {
+      return (
+        <PinebiLoader 
+          size="large" 
+          text="Sistem başlatılıyor..." 
+          fullScreen={true}
+          variant="modern"
+        />
+      )
+    }
 
   // Kullanıcı giriş yapmışsa dashboard göster
   if (user) {
@@ -41,11 +42,12 @@ export default function HomePage() {
   }
 
   // Kullanıcı giriş yapmamışsa (yönlendirme sırasında)
-  return (
-    <PinebiLoader 
-      size="large" 
-      text="Yönlendiriliyor..." 
-      fullScreen={true}
-    />
-  )
+    return (
+      <PinebiLoader 
+        size="large" 
+        text="Yönlendiriliyor..." 
+        fullScreen={true}
+        variant="pulse"
+      />
+    )
 }

@@ -1,0 +1,22 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- Pinebi Logo -->
+  <rect width="512" height="512" fill="#00568C" rx="64"/>
+  
+  <!-- Sol dikey bar -->
+  <rect x="128" y="128" width="32" height="256" fill="#A7F300" rx="16"/>
+  
+  <!-- Orta yatay bar -->
+  <rect x="160" y="192" width="96" height="32" fill="#A7F300" rx="16"/>
+  
+  <!-- Üst dikey bar -->
+  <rect x="160" y="128" width="32" height="64" fill="#A7F300" rx="16"/>
+  
+  <!-- Sağ üçgen -->
+  <polygon points="288,176 352,160 352,192" fill="#A7F300"/>
+  
+  <!-- Sağ yatay bar -->
+  <rect x="352" y="192" width="128" height="32" fill="#A7F300" rx="16"/>
+  
+  <!-- Pinebi Text -->
+  <text x="256" y="400" font-family="Arial, sans-serif" font-size="48" font-weight="bold" text-anchor="middle" fill="white">Pinebi</text>
+</svg>

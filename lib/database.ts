@@ -228,37 +228,102 @@ export const db = {
       reportConfig: {
         findAll: () => prisma.reportConfig.findMany({
           where: { isActive: true },
-          include: { category: true, company: true, user: true },
+          include: { 
+            category: true, 
+            company: true, 
+            user: true,
+            reportUsers: true 
+          },
           orderBy: { name: 'asc' }
         }),
 
         findByCompanyAndUser: (companyId: string, userId: string, userRole: string) => {
+          console.log('🔍 findByCompanyAndUser called:', { companyId, userId, userRole })
+          
           if (userRole === 'ADMIN') {
             // Admin can see all reports (no company filtering)
-            return prisma.reportConfig.findMany({
-              where: { 
-                isActive: true
-              },
-              include: { category: true, company: true, user: true },
-              orderBy: [
-                { menuGroup: 'asc' },
-                { menuOrder: 'asc' },
-                { name: 'asc' }
-              ]
-            })
-          } else {
-            // Regular users can only see reports from their company
+            console.log('👑 Admin user - fetching all active reports with showInMenu')
             return prisma.reportConfig.findMany({
               where: { 
                 isActive: true,
-                companyId: companyId
+                showInMenu: true
               },
-              include: { category: true, company: true, user: true },
+              include: { 
+                category: true, 
+                company: true, 
+                user: true,
+                reportUsers: true 
+              },
               orderBy: [
                 { menuGroup: 'asc' },
                 { menuOrder: 'asc' },
                 { name: 'asc' }
               ]
+            }).then(reports => {
+              console.log(`✅ Found ${reports.length} reports for ${userRole} user`)
+              return reports
+            })
+          } else if (userRole === 'REPORTER') {
+            // Reporter can see reports from their company + assigned reports
+            console.log('📊 Reporter user - fetching company reports + assigned reports with showInMenu')
+            return prisma.reportConfig.findMany({
+              where: { 
+                isActive: true,
+                showInMenu: true,
+                OR: [
+                  { companyId: companyId }, // Kendi şirketinin raporları
+                  { 
+                    reportUsers: { // veya atanmış raporlar
+                      some: {
+                        userId: userId
+                      }
+                    }
+                  }
+                ]
+              },
+              include: { 
+                category: true, 
+                company: true, 
+                user: true,
+                reportUsers: true 
+              },
+              orderBy: [
+                { menuGroup: 'asc' },
+                { menuOrder: 'asc' },
+                { name: 'asc' }
+              ]
+            }).then(reports => {
+              console.log(`✅ Found ${reports.length} reports for ${userRole} user`)
+              return reports
+            })
+          } else {
+            // Regular users: filter by company + user assignment
+            console.log('👤 Regular user - filtering by company + user assignment with showInMenu')
+            return prisma.reportConfig.findMany({
+              where: { 
+                isActive: true,
+                showInMenu: true,
+                companyId: companyId,
+                reportUsers: {
+                  some: {
+                    userId: userId
+                  }
+                }
+              },
+              include: { 
+                category: true, 
+                company: true, 
+                user: true,
+                reportUsers: true 
+              },
+              orderBy: [
+                { menuGroup: 'asc' },
+                { menuOrder: 'asc' },
+                { name: 'asc' }
+              ]
+            }).then(reports => {
+              console.log(`✅ Found ${reports.length} reports for user ${userId}`)
+              return reports
             })
           }
         },
@@ -274,7 +339,13 @@ export const db = {
     
     findById: (id: string) => prisma.reportConfig.findUnique({
       where: { id },
-      include: { category: true, company: true, user: true, executions: true }
+      include: { 
+        category: true, 
+        company: true, 
+        user: true, 
+        executions: true,
+        reportUsers: true 
+      }
     }),
     
     create: (data: any) => prisma.reportConfig.create({

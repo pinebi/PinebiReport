@@ -60,8 +60,18 @@ export function EnhancedDataGrid({
   theme = 'default',
   forcePivot = false
 }: EnhancedDataGridProps) {
+  // Debug: Log data received by grid
+  // console.log('🔍 EnhancedDataGrid received data:', data?.length || 0, 'items')
   
   const [gridApi, setGridApi] = useState<GridApi | null>(null)
+  
+  // Force grid to update when data changes
+  useEffect(() => {
+    if (gridApi && data && data.length > 0) {
+      console.log('🔄 Force updating grid with new data:', data.length, 'items')
+      gridApi.setGridOption('rowData', data)
+    }
+  }, [data, gridApi])
   const [gridColumnApi, setGridColumnApi] = useState<ColumnApi | null>(null)
   const [multiSelectFilters, setMultiSelectFilters] = useState<Record<string, Set<any>>>({})
   const [sidebarVisible, setSidebarVisible] = useState<boolean>(false)
@@ -280,6 +290,12 @@ export function EnhancedDataGrid({
   const onGridReady = useCallback((params: GridReadyEvent) => {
     setGridApi(params.api)
     setGridColumnApi(params.columnApi)
+    
+    // Force set initial data if available
+    if (data && data.length > 0) {
+      console.log('🚀 Setting initial data on grid ready:', data.length, 'items')
+      params.api.setGridOption('rowData', data)
+    }
     
     // Sidebar is not available in community edition
     setSidebarVisible(false)
@@ -589,7 +605,7 @@ export function EnhancedDataGrid({
         clearTimeout(resizeTimer)
     }
     }
-  }, [user?.id, gridType, forcePivot])
+  }, [user?.id, gridType, forcePivot, data])
 
   // Sidebar functions
   const toggleSidebar = useCallback(() => {
@@ -1788,9 +1804,9 @@ export function EnhancedDataGrid({
             '--ag-border-color': '#e5e7eb'
           } as React.CSSProperties}
         >
-          <AgGridReact
-            rowData={data}
-            columnDefs={enhancedColumnDefs}
+        <AgGridReact
+          rowData={data}
+          columnDefs={enhancedColumnDefs}
             defaultColDef={defaultColDef}
             rowModelType={'clientSide' as any}
             components={componentsMap as any}

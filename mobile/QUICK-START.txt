@@ -1,0 +1,102 @@
+══════════════════════════════════════════════════
+📱 MODERNERP ANDROID UYGULAMASI - HIZLI BAŞLANGIÇ
+══════════════════════════════════════════════════
+
+✅ Capacitor kurulumu tamamlandı!
+
+📋 SONRAKI ADIMLAR:
+
+1. JAVA VE ANDROID STUDIO KURULUMU
+   ✓ JDK 17+: https://adoptium.net/
+   ✓ Android Studio: https://developer.android.com/studio
+   ✓ Android SDK Platform 33
+   ✓ Android SDK Build-Tools
+
+2. ENVIRONMENT VARIABLES (Windows PowerShell - Admin)
+   setx JAVA_HOME "C:\Program Files\Eclipse Adoptium\jdk-17.x.x-hotspot"
+   setx ANDROID_HOME "%LOCALAPPDATA%\Android\Sdk"
+
+3. CAPACITOR INIT
+   npm run cap:init
+
+4. ANDROID PLATFORM EKLE
+   npm run cap:add:android
+
+5. BUILD VE SYNC
+   npm run android:dev
+
+6. ANDROID STUDIO'DA AÇ
+   npm run cap:open
+
+══════════════════════════════════════════════════
+📖 KOMUTLAR:
+══════════════════════════════════════════════════
+
+Development:
+  npm run android:dev       → Build + Sync + Open Android Studio
+  npm run android:sync      → Sadece Sync + Open
+
+Build:
+  npm run build:android     → Next.js build + Capacitor sync
+
+Capacitor:
+  npm run cap:init          → Capacitor initialize
+  npm run cap:add:android   → Android platform ekle
+  npm run cap:sync          → Sync files
+  npm run cap:open          → Android Studio'yu aç
+
+══════════════════════════════════════════════════
+📂 DOSYALAR:
+══════════════════════════════════════════════════
+
+✓ capacitor.config.ts     → Capacitor configuration
+✓ next.config.android.js  → Android için Next.js config
+✓ mobile/ANDROID-SETUP.md → Detaylı kurulum rehberi
+
+══════════════════════════════════════════════════
+🎯 WORKFLOW:
+══════════════════════════════════════════════════
+
+1. Web kodunda değişiklik yap
+2. npm run android:dev
+3. Android Studio'da Run
+4. Emulator veya fiziksel cihazda test et
+
+══════════════════════════════════════════════════
+📦 PRODUCTION BUILD:
+══════════════════════════════════════════════════
+
+1. Signing key oluştur:
+   cd android/app
+   keytool -genkey -v -keystore modernerp.keystore -alias modernerp -keyalg RSA -keysize 2048 -validity 10000
+
+2. APK build:
+   cd android
+   gradlew assembleRelease
+
+3. APK location:
+   android/app/build/outputs/apk/release/app-release.apk
+
+══════════════════════════════════════════════════
+🐛 SORUN GİDERME:
+══════════════════════════════════════════════════
+
+Problem: Android Studio bulunamıyor
+Çözüm: ANDROID_HOME environment variable kontrol et
+
+Problem: Gradle build hatası
+Çözüm: cd android && gradlew clean
+
+Problem: White screen
+Çözüm: npm run build && npm run cap:sync
+
+══════════════════════════════════════════════════
+📞 YARDIM:
+══════════════════════════════════════════════════
+
+Detaylı rehber: mobile/ANDROID-SETUP.md
+Capacitor Docs: https://capacitorjs.com/docs
+Android Developer: https://developer.android.com
+
+══════════════════════════════════════════════════
+

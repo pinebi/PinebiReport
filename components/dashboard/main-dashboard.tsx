@@ -10,8 +10,16 @@ import { DailyGrid } from './daily-grid'
 import { CompanyPerformanceWidget } from './company-performance-widget'
 import DailyTrendsChart from './daily-trends-chart'
 import MonthlyComparisonChart from './monthly-comparison-chart'
+import { AverageCustomerRevenue } from './average-customer-revenue'
 import PinebiLoader from '@/components/ui/pinebi-loader'
 import { useAuth } from '@/contexts/AuthContext'
+import { useTouchGestures } from '@/hooks/use-touch-gestures'
+import { PullToRefresh } from '@/components/ui/pull-to-refresh'
+import { AnimatedCard } from '@/components/ui/animated-card'
+import { StaggeredList } from '@/components/ui/staggered-list'
+import { HoverScale } from '@/components/ui/hover-scale'
+import { usePerformance } from '@/hooks/use-performance'
+import { OptimizedImage } from '@/components/ui/optimized-image'
 
 interface DashboardData {
   kpiData: {
@@ -51,6 +59,14 @@ interface DashboardData {
     growth: number
     formattedMonth: string
   }[]
+  customerRevenueData?: {
+    company: string
+    totalRevenue: number
+    totalCustomers: number
+    averageRevenue: number
+    change?: number
+    trend?: 'up' | 'down' | 'stable'
+  }[]
 }
 
 function MainDashboard() {
@@ -66,6 +82,49 @@ function MainDashboard() {
   })
   const [endDate, setEndDate] = useState(() => {
     return new Date().toISOString().split('T')[0]
+  })
+
+  // Performance optimization
+  const { 
+    getCachedData, 
+    setCachedData, 
+    useLazyLoad,
+    metrics: performanceMetrics 
+  } = usePerformance({
+    enableMetrics: true,
+    logLevel: 'info',
+    maxCacheSize: 50 * 1024 * 1024, // 50MB
+    compressionEnabled: true,
+    lazyLoading: true
+  })
+
+  // Touch gestures for mobile
+  const { isTouchDevice } = useTouchGestures({
+    onSwipeLeft: () => {
+      // Swipe left - show next date range
+      const newStartDate = new Date(endDate)
+      const newEndDate = new Date(newStartDate)
+      newEndDate.setDate(newEndDate.getDate() + 30)
+      handleDateChange(newStartDate.toISOString().split('T')[0], newEndDate.toISOString().split('T')[0])
+    },
+    onSwipeRight: () => {
+      // Swipe right - show previous date range
+      const newEndDate = new Date(startDate)
+      const newStartDate = new Date(newEndDate)
+      newStartDate.setDate(newStartDate.getDate() - 30)
+      handleDateChange(newStartDate.toISOString().split('T')[0], newEndDate.toISOString().split('T')[0])
+    },
+    onSwipeUp: () => {
+      // Swipe up - refresh data
+      handleUpdate()
+    },
+    onDoubleTap: () => {
+      // Double tap - toggle live data
+      setIsLiveData(!isLiveData)
+    }
+  }, {
+    swipeThreshold: 80,
+    preventDefault: false
   })
 
   const processDashboardData = (rawData: any[]): DashboardData => {
@@ -175,15 +234,21 @@ function MainDashboard() {
       const requestBody = {
         startDate: start,
         endDate: end,
-        firma: user?.company?.name || 'RMK' // Kullanıcının şirket adını kullan
+        firma: user?.company?.name || 'RMK',
+        userCompany: user?.company?.name || 'RMK' // Kullanıcının şirket adını ayrı olarak gönder
       }
       
       console.log('📅 Request body:', requestBody)
 
+      // Get auth token from localStorage
+      const token = localStorage.getItem('token')
+      const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {}
+      
       const response = await fetch('/api/dashboard', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...authHeaders
         },
         body: JSON.stringify(requestBody),
       })
@@ -223,6 +288,8 @@ function MainDashboard() {
       setLoading(false)
     }
   }
+
+  // Simple dashboard data fetching without offline complications
 
   const fetchDashboardData = async () => {
     // Mevcut state'teki startDate ve endDate'i kullanarak çağır
@@ -331,18 +398,20 @@ function MainDashboard() {
 
   if (loading || !data) {
     return (
-      <PinebiLoader 
-        size="large" 
-        text="Dashboard verileri yükleniyor..." 
-        fullScreen={false}
-      />
+            <PinebiLoader 
+              size="large" 
+              text="Dashboard verileri yükleniyor..." 
+              fullScreen={false}
+              variant="modern"
+            />
     )
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <PullToRefresh onRefresh={handleUpdate}>
+      <div className="flex flex-col h-full">
       <DashboardHeader
-        title="Genel Bakış"
+          title="Genel Bakış"
         startDate={startDate}
         endDate={endDate}
         onDateChange={handleDateChange}
@@ -351,39 +420,72 @@ function MainDashboard() {
         lastUpdate={lastUpdate}
       />
 
-      <KPICards data={data?.kpiData} loading={loading} />
+      <AnimatedCard delay={0}>
+        <KPICards data={data?.kpiData} loading={loading} />
+      </AnimatedCard>
         
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
-        <PaymentDistributionChart data={data.paymentDistribution} />
+        <AnimatedCard delay={100}>
+          <HoverScale scale={1.02}>
+            <PaymentDistributionChart data={data.paymentDistribution} />
+          </HoverScale>
+        </AnimatedCard>
+        <AnimatedCard delay={200}>
+          <HoverScale scale={1.02}>
           <DailySalesChart data={data.dailySales} />
-          <TopCustomers data={data.topCustomers} />
+          </HoverScale>
+        </AnimatedCard>
+        <AnimatedCard delay={250}>
+          <HoverScale scale={1.02}>
+            <AverageCustomerRevenue data={data.customerRevenueData || []} />
+          </HoverScale>
+        </AnimatedCard>
       </div>
 
-      <div className="mb-6">
+      {/* Firma Performansı ve Ürün Satışı Top 30 yan yana */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        <AnimatedCard delay={300}>
           <CompanyPerformanceWidget 
-          title="Firma Performansı"
-          data={data.companyPerformance}
+            title="Firma Performansı"
+            data={data.companyPerformance}
           />
-        </div>
-        
-      <div className="flex-grow">
-      <DailyGrid data={data.dailyGrid} />
+        </AnimatedCard>
+        <AnimatedCard delay={400}>
+          <HoverScale scale={1.02}>
+          <TopCustomers data={data.topCustomers} limit={30} />
+          </HoverScale>
+        </AnimatedCard>
       </div>
+        
+      <AnimatedCard delay={500}>
+        <div className="flex-grow">
+      <DailyGrid data={data.dailyGrid} />
+        </div>
+      </AnimatedCard>
 
       {/* Yeni Grafikler - Dashboard'ın En Altı */}
       <div className="mt-8 space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <DailyTrendsChart 
-            data={data.dailySales} 
-            title="Günlük Satış Trendleri" 
-          />
-          <MonthlyComparisonChart 
-            data={data.monthlyComparison || []} 
-            title="Aylık Karşılaştırma" 
-          />
+          <AnimatedCard delay={600}>
+            <HoverScale scale={1.02}>
+              <DailyTrendsChart 
+                data={data.dailySales} 
+                title="Günlük Satış Trendleri" 
+              />
+            </HoverScale>
+          </AnimatedCard>
+          <AnimatedCard delay={700}>
+            <HoverScale scale={1.02}>
+              <MonthlyComparisonChart 
+                data={data.monthlyComparison || []} 
+                title="Aylık Karşılaştırma" 
+              />
+            </HoverScale>
+          </AnimatedCard>
         </div>
       </div>
     </div>
+    </PullToRefresh>
   )
 }
 

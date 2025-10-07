@@ -10,7 +10,31 @@ export async function GET(request: NextRequest) {
     const userId = searchParams.get('userId')
     const userRole = searchParams.get('userRole')
     
+    // Authorization header'dan kullanıcı bilgilerini al
+    const authHeader = request.headers.get('Authorization')
+    console.log('🔑 Authorization header:', authHeader ? 'Present' : 'Missing')
+    let currentUser = null
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      try {
+        const encodedToken = authHeader.split(' ')[1]
+        console.log('🔑 Encoded token:', encodedToken)
+        const decodedToken = Buffer.from(encodedToken, 'base64').toString('utf-8')
+        console.log('🔑 Decoded token:', decodedToken)
+        const [currentUserId] = decodedToken.split(':')
+        console.log('🔑 User ID from token:', currentUserId)
+        if (currentUserId) {
+          currentUser = await db.user.findById(currentUserId)
+          console.log('🔍 Current user from token:', currentUser?.username, 'Company:', currentUser?.company?.name)
+        }
+      } catch (error) {
+        console.warn('Token decode error:', error)
+      }
+    } else {
+      console.log('❌ No valid Authorization header found')
+    }
+    
     console.log('Query params:', { categoryId, companyId, userId, userRole })
+    console.log('Current user:', currentUser?.username, 'Company:', currentUser?.company?.name)
     
     let reports: any[]
     if (categoryId) {
@@ -75,93 +99,91 @@ export async function GET(request: NextRequest) {
         reports = []
       }
       
-      // Always add mock sales reports for better UX
-      const mockSalesReports = [
-        {
-          id: 'sales-report-1',
-          name: 'Günlük Satış Raporu',
-          description: 'Günlük satış performansı ve detayları',
-          endpointUrl: 'https://api.pinebi.com/ReportService.svc',
-          apiUsername: 'PINEBI',
-          apiPassword: 'e81ymAbtx1jJ8hoc8IPU79LjPemuXjok2NXYRTa51',
-          headers: JSON.stringify({ 
-            'Content-Type': 'application/json', 
-            'Accept': 'application/json',
-            'Authorization': 'Basic UElORUJJOnE4MXltQWJ0eDFqSjhob2M4SVBVNzlMalBlbXVYam9rMk5YWVJUYTUx',
-            'ENDPOINT': 'GetSalesDashboardData',
-            'showInMenu': true 
-          }),
-          categoryId: 'cat-satis',
-          companyId: 'company-1',
-          userId: 'user-1',
-          isActive: true,
-          menuGroup: 'A',
-          menuOrder: 1,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          category: { id: 'cat-satis', name: 'Satış Raporları' }
-        },
-        {
-          id: 'sales-report-2',
-          name: 'Aylık Satış Özeti',
-          description: 'Aylık satış performansı ve analizi',
-          endpointUrl: 'https://api.pinebi.com/ReportService.svc',
-          apiUsername: 'PINEBI',
-          apiPassword: 'e81ymAbtx1jJ8hoc8IPU79LjPemuXjok2NXYRTa51',
-          headers: JSON.stringify({ 
-            'Content-Type': 'application/json', 
-            'Accept': 'application/json',
-            'Authorization': 'Basic UElORUJJOnE4MXltQWJ0eDFqSjhob2M4SVBVNzlMalBlbXVYam9rMk5YWVJUYTUx',
-            'ENDPOINT': 'GetSalesDashboardData',
-            'showInMenu': true 
-          }),
-          categoryId: 'cat-satis',
-          companyId: 'company-1',
-          userId: 'user-1',
-          isActive: true,
-          menuGroup: 'A',
-          menuOrder: 2,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          category: { id: 'cat-satis', name: 'Satış Raporları' }
-        },
-        {
-          id: 'sales-report-3',
-          name: 'Müşteri Satış Analizi',
-          description: 'Müşteri bazlı satış performansı',
-          endpointUrl: 'https://api.pinebi.com/ReportService.svc',
-          apiUsername: 'PINEBI',
-          apiPassword: 'e81ymAbtx1jJ8hoc8IPU79LjPemuXjok2NXYRTa51',
-          headers: JSON.stringify({ 
-            'Content-Type': 'application/json', 
-            'Accept': 'application/json',
-            'Authorization': 'Basic UElORUJJOnE4MXltQWJ0eDFqSjhob2M4SVBVNzlMalBlbXVYam9rMk5YWVJUYTUx',
-            'ENDPOINT': 'GetSalesDashboardData',
-            'showInMenu': true 
-          }),
-          categoryId: 'cat-satis',
-          companyId: 'company-1',
-          userId: 'user-1',
-          isActive: true,
-          menuGroup: 'A',
-          menuOrder: 3,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          category: { id: 'cat-satis', name: 'Satış Raporları' }
-        }
-      ]
-      
-      // Add mock sales reports if they don't exist
-      const existingReportNames = reports.map((r: any) => r.name)
-      const missingSalesReports = mockSalesReports.filter(mock => !existingReportNames.includes(mock.name))
-      
-      if (missingSalesReports.length > 0) {
-        console.log('📊 Adding missing sales reports:', missingSalesReports.map(r => r.name))
-        reports = [...reports, ...missingSalesReports]
-      }
+      // Mock reports removed - using only real reports from database
+      console.log('📊 Using real reports from database only')
     }
+    // Kullanıcı yetkilerine göre rapor filtreleme
+    let filteredReports = reports || []
+    
+    if (currentUser) {
+      console.log('🔍 Filtering reports for user:', currentUser.username, 'Company:', currentUser.company?.name, 'Role:', currentUser.role)
+      
+      // Admin kullanıcılar TÜM raporları görebilir
+      if (currentUser.role === 'ADMIN') {
+        console.log('🔍 Admin user - showing ALL reports without filtering')
+        filteredReports = reports
+      } else {
+        // Normal kullanıcılar için detaylı filtreleme
+        filteredReports = reports.filter((report: any) => {
+          console.log('🔍 Checking report:', report.name)
+          
+          // 1. FIRMA EŞLEŞMESİ KONTROLÜ
+          const userCompanyName = currentUser.company?.name || currentUser.company?.code || ''
+          const reportCompanyName = report.company?.name || report.company?.code || ''
+          
+          console.log('🏢 Company check - User:', userCompanyName, 'Report:', reportCompanyName)
+          
+          if (userCompanyName && reportCompanyName) {
+            const companyMatches = userCompanyName.toLowerCase() === reportCompanyName.toLowerCase()
+            if (!companyMatches) {
+              console.log('❌ Company mismatch - hiding report')
+              return false
+            }
+            console.log('✅ Company matches')
+          }
+          
+          // 2. MENÜDE GÖSTERİLSİN KONTROLÜ
+          let showInMenu = true
+          try {
+            const headers = typeof report.headers === 'string' ? JSON.parse(report.headers) : report.headers
+            if (headers && typeof headers.showInMenu !== 'undefined') {
+              showInMenu = !!headers.showInMenu
+            }
+          } catch (e) {
+            console.warn('Error parsing headers:', e)
+          }
+          
+          if (!showInMenu) {
+            console.log('❌ Report not set to show in menu - hiding')
+            return false
+          }
+          console.log('✅ Report set to show in menu')
+          
+          // 3. KULLANICI İZNİ KONTROLÜ
+          try {
+            const headers = typeof report.headers === 'string' ? JSON.parse(report.headers) : report.headers
+            const allowedUserIds = headers?.allowedUserIds || []
+            
+            if (allowedUserIds && allowedUserIds.length > 0) {
+              const userHasPermission = allowedUserIds.includes(currentUser.id)
+              if (!userHasPermission) {
+                console.log('❌ User not in allowed users list - hiding report')
+                return false
+              }
+              console.log('✅ User has permission')
+            } else {
+              console.log('✅ No user restrictions - showing report')
+            }
+          } catch (e) {
+            console.warn('Error checking user permissions:', e)
+            // Hata durumunda göster
+            console.log('✅ Error in permission check - showing report')
+          }
+          
+          console.log('✅ Report passed all checks - showing')
+          return true
+        })
+      }
+      
+      console.log('🔍 Filtered reports count:', filteredReports.length)
+    } else {
+      // Kullanıcı bilgisi yoksa tüm raporları göster
+      console.log('🔍 No user info - showing all reports')
+      filteredReports = reports
+    }
+    
     // project showInMenu from headers JSON (default true)
-    const projected = (reports || []).map((r: any) => {
+    const projected = filteredReports.map((r: any) => {
       let showInMenu = true
       try {
         const h = typeof r.headers === 'string' ? JSON.parse(r.headers) : r.headers

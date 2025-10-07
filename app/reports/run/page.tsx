@@ -87,17 +87,35 @@ export default function RunReportsPage() {
           const reportsData = await reportsResponse.json()
           let filteredReports = reportsData.reports || []
           
-          // Filter reports based on user role and company
-          if (user.role !== 'ADMIN') {
-            // Non-admin users: only show reports from their company and active reports
-            filteredReports = filteredReports.filter((report: ReportConfig) => 
-              report.isActive && user.companyId && report.companyId && user.companyId === report.companyId
-            )
-            console.log(`🔍 Filtered reports for user ${user.username} (${user.role}):`, filteredReports.length)
+          // Filter reports based on user role, company, user assignment, showInMenu
+          if (user.role === 'ADMIN') {
+            // Admin users: see all active reports with showInMenu
+            filteredReports = filteredReports.filter((report: any) => {
+              return report.isActive && report.showInMenu !== false
+            })
+            console.log(`👑 ${user.role} user sees all active reports with showInMenu:`, filteredReports.length)
+          } else if (user.role === 'REPORTER') {
+            // Reporter users: see company reports + assigned reports with showInMenu
+            filteredReports = filteredReports.filter((report: any) => {
+              const isActive = report.isActive
+              const showInMenu = report.showInMenu !== false
+              const isCompanyMatch = user.companyId && report.companyId && user.companyId === report.companyId
+              const isUserAssigned = report.reportUsers?.some((ru: any) => ru.userId === user.id)
+              
+              return isActive && showInMenu && (isCompanyMatch || isUserAssigned)
+            })
+            console.log(`📊 ${user.role} user sees company + assigned reports with showInMenu:`, filteredReports.length)
           } else {
-            // Admin users: see all active reports
-            filteredReports = filteredReports.filter((report: ReportConfig) => report.isActive)
-            console.log(`👑 Admin user sees all active reports:`, filteredReports.length)
+            // Regular users: company + user assignment + active + showInMenu
+            filteredReports = filteredReports.filter((report: any) => {
+              const isActive = report.isActive
+              const showInMenu = report.showInMenu !== false
+              const isCompanyMatch = user.companyId && report.companyId && user.companyId === report.companyId
+              const isUserAssigned = report.reportUsers?.some((ru: any) => ru.userId === user.id)
+              
+              return isActive && showInMenu && isCompanyMatch && isUserAssigned
+            })
+            console.log(`🔍 Filtered reports for user ${user.username} (${user.role}):`, filteredReports.length)
           }
           
           setReports(filteredReports)

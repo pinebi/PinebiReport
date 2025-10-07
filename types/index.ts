@@ -39,6 +39,14 @@ export interface ReportCategory {
   updatedAt: Date
 }
 
+export interface ReportUsers {
+  id: string
+  reportId: string
+  userId: string
+  createdAt: Date
+  updatedAt: Date
+}
+
 export interface ReportConfig {
   id: string
   name: string
@@ -55,6 +63,7 @@ export interface ReportConfig {
   user?: User
   isActive: boolean
   showInMenu: boolean
+  reportUsers?: ReportUsers[]
   createdAt: Date
   updatedAt: Date
 }

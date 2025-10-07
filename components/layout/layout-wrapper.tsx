@@ -3,7 +3,9 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { usePathname } from 'next/navigation'
 import { TopNavigation } from './top-navigation'
+import { MobileBottomNavigation } from './mobile-navigation'
 import { Breadcrumb, CompactBreadcrumb } from '@/components/ui/breadcrumb'
+import { usePerformance } from '@/hooks/use-performance'
 import { useEffect, useState, memo } from 'react'
 
 export const LayoutWrapper = memo(function LayoutWrapper({ children }: { children: React.ReactNode }) {
@@ -11,6 +13,15 @@ export const LayoutWrapper = memo(function LayoutWrapper({ children }: { childre
   const [pathname, setPathname] = useState('')
   const [mounted, setMounted] = useState(false)
   const pathnameFromHook = usePathname()
+  
+  // Performance optimization
+  const { useLazyLoad, optimizeBundle } = usePerformance({
+    enableMetrics: true,
+    logLevel: 'info',
+    maxCacheSize: 50 * 1024 * 1024, // 50MB
+    compressionEnabled: true,
+    lazyLoading: true
+  })
 
   useEffect(() => {
     setMounted(true)
@@ -45,10 +56,13 @@ export const LayoutWrapper = memo(function LayoutWrapper({ children }: { childre
           </div>
         </div>
         
-        <main className="flex-1">
+        <main className="flex-1 pb-16">
           {children}
         </main>
       </div>
+      
+      {/* Mobile Bottom Navigation */}
+      <MobileBottomNavigation />
     </div>
   )
 })
