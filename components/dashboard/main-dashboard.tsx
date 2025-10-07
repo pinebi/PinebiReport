@@ -230,12 +230,28 @@ function MainDashboard() {
 
     try {
       console.log('🚀 Loading dashboard data from API with dates:', { start, end })
+      console.log('👤 Current user:', user)
+      console.log('🏢 User company:', user?.company)
+      console.log('🏢 User company name:', user?.company?.name)
+
+      // Admin kullanıcısı için firma belirleme
+      let firma = 'RMK' // Varsayılan
+      
+      if (user?.role === 'ADMIN') {
+        // Admin her zaman RMK görür
+        firma = 'RMK'
+        console.log('👑 Admin user detected - using RMK')
+      } else if (user?.company?.name) {
+        // Diğer kullanıcılar kendi firmasını görür
+        firma = user.company.name
+        console.log('👤 Regular user detected - using company:', firma)
+      }
 
       const requestBody = {
         startDate: start,
         endDate: end,
-        firma: user?.company?.name || 'RMK',
-        userCompany: user?.company?.name || 'RMK' // Kullanıcının şirket adını ayrı olarak gönder
+        firma: firma,
+        userCompany: firma // Kullanıcının şirket adını ayrı olarak gönder
       }
       
       console.log('📅 Request body:', requestBody)

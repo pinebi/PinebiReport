@@ -5,6 +5,7 @@ import { MessageCircle, Send, X, Bot, User, TrendingUp, FileSpreadsheet, Calenda
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Message {
   id: string;
@@ -36,24 +37,79 @@ const quickActions = [
 ];
 
 export function DashboardChatbot() {
+  const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
+  const [input, setInput] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // Initial welcome message based on user's company
+  const getWelcomeMessage = () => {
+    const firmaName = user?.role === 'ADMIN' ? 'RMK' : (user?.company?.name || 'RMK');
+    return `Merhaba! 👋 Size nasıl yardımcı olabilirim?\n\n${firmaName} firması için dashboard verileriniz, raporlar veya analizler hakkında soru sorabilirsiniz.`;
+  };
+
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
-      content: 'Merhaba! 👋 Size nasıl yardımcı olabilirim? Dashboard verileriniz, raporlar veya analizler hakkında soru sorabilirsiniz.',
+      content: getWelcomeMessage(),
       timestamp: new Date()
     }
   ]);
-  const [input, setInput] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Dashboard verilerini çek
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      if (!user) return;
+
+      try {
+        // Kullanıcının firmasına göre veri çek
+        let firma = 'RMK'; // Varsayılan
+        
+        if (user?.role === 'ADMIN') {
+          firma = 'RMK';
+        } else if (user?.company?.name) {
+          firma = user.company.name;
+        }
+
+        console.log('🤖 AI Chatbot - Fetching data for company:', firma);
+
+        const response = await fetch('/api/dashboard', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
+            endDate: new Date().toISOString().split('T')[0],
+            firma: firma
+          }),
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setDashboardData(result.data);
+            console.log('🤖 AI Chatbot - Dashboard data loaded:', result.data);
+          }
+        }
+      } catch (error) {
+        console.error('🤖 AI Chatbot - Error loading dashboard data:', error);
+      }
+    };
+
+    if (isOpen) {
+      fetchDashboardData();
+    }
+  }, [isOpen, user]);
 
   const processQuery = async (query: string) => {
     const lowerQuery = query.toLowerCase();
@@ -66,13 +122,40 @@ export function DashboardChatbot() {
     let response = '';
     let actions: any[] = [];
 
+    // Firma bilgisi
+    const firmaName = user?.role === 'ADMIN' ? 'RMK' : (user?.company?.name || 'RMK');
+    const kpiData = dashboardData?.kpiData;
+    const topCustomers = dashboardData?.topCustomers || [];
+    const companyPerformance = dashboardData?.companyPerformance || [];
+
+    // Format currency
+    const formatCurrency = (value: number) => {
+      return new Intl.NumberFormat('tr-TR', { 
+        style: 'currency', 
+        currency: 'TRY',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value);
+    };
+
     // Bugünkü satışlar
     if (lowerQuery.includes('bugün') || lowerQuery.includes('today')) {
-      response = '📊 Bugünkü satışlar: 160.665₺\n\n' +
-                 '• 157 müşteri\n' +
-                 '• Geçen güne göre %12 artış 📈\n' +
-                 '• En çok satan: Rahmi M.Koç Müzesi (146.830₺)\n\n' +
-                 'Detaylı rapor ister misiniz?';
+      if (kpiData && dashboardData) {
+        const topCustomer = topCustomers[0];
+        response = `📊 ${firmaName} - Bugünkü satışlar: ${formatCurrency(kpiData.toplamCiro)}\n\n` +
+                   `• Nakit: ${formatCurrency(kpiData.nakit)}\n` +
+                   `• Kredi Kartı: ${formatCurrency(kpiData.krediKarti)}\n` +
+                   `• Açık Hesap: ${formatCurrency(kpiData.acikHesap)}\n`;
+        
+        if (topCustomer) {
+          response += `\n• En çok alan: ${topCustomer.name} (${formatCurrency(topCustomer.amount)})\n`;
+        }
+        
+        response += '\nDetaylı rapor ister misiniz?';
+      } else {
+        response = `⏳ ${firmaName} için veriler yükleniyor...\n\nLütfen birkaç saniye bekleyin ve tekrar deneyin.`;
+      }
+      
       actions = [
         {
           label: 'Detaylı Rapor',
@@ -131,24 +214,43 @@ export function DashboardChatbot() {
         }
       ];
     }
-    // Top ürünler
-    else if (lowerQuery.includes('ürün') || lowerQuery.includes('product')) {
-      response = '🏆 En çok satan ürünler:\n\n' +
-                 '1. Kahve ☕ - 2.340 adet\n' +
-                 '2. Sandviç 🥪 - 1.890 adet\n' +
-                 '3. Çay 🫖 - 1.567 adet\n' +
-                 '4. Pasta 🍰 - 892 adet\n' +
-                 '5. Su 💧 - 743 adet\n\n' +
-                 'Detaylı ürün analizi için rapor çalıştırabilirsiniz.';
-    }
-    // Müşteri analizi
+    // Top müşteriler
     else if (lowerQuery.includes('müşteri') || lowerQuery.includes('customer')) {
-      response = '👥 Müşteri Analizi:\n\n' +
-                 '• Toplam: 4.567 müşteri\n' +
-                 '• Ortalama sepet: 352₺\n' +
-                 '• En sadık: Rahmi M.Koç Müzesi (92 işlem)\n' +
-                 '• Yeni müşteri: 234 (%5.1)\n\n' +
-                 'Müşteri memnuniyeti: ⭐⭐⭐⭐⭐ (4.8/5)';
+      if (topCustomers && topCustomers.length > 0) {
+        response = `👥 ${firmaName} - En İyi Müşteriler (Top 5):\n\n`;
+        
+        topCustomers.slice(0, 5).forEach((customer: any, index: number) => {
+          response += `${index + 1}. ${customer.name} - ${formatCurrency(customer.amount)}\n`;
+        });
+        
+        response += '\nDetaylı müşteri analizi için rapor çalıştırabilirsiniz.';
+        
+        actions = [
+          {
+            label: 'Tüm Müşteriler',
+            action: () => window.location.href = '/reports/run'
+          }
+        ];
+      } else {
+        response = `⏳ ${firmaName} için müşteri verileri yükleniyor...\n\nLütfen birkaç saniye bekleyin ve tekrar deneyin.`;
+      }
+    }
+    // Firma performansı
+    else if (lowerQuery.includes('performans') || lowerQuery.includes('firma') || lowerQuery.includes('company')) {
+      if (companyPerformance && companyPerformance.length > 0) {
+        response = `📈 ${firmaName} - Firma Performansı:\n\n`;
+        
+        companyPerformance.forEach((company: any) => {
+          response += `• ${company.company}: ${formatCurrency(company.revenue)}\n`;
+          response += `  Müşteri sayısı: ${company.customers}\n`;
+          if (company.marketShare) {
+            response += `  Pazar payı: %${company.marketShare.toFixed(1)}\n`;
+          }
+          response += '\n';
+        });
+      } else {
+        response = `⏳ ${firmaName} için performans verileri yükleniyor...\n\nLütfen birkaç saniye bekleyin ve tekrar deneyin.`;
+      }
     }
     // Yardım
     else if (lowerQuery.includes('yardım') || lowerQuery.includes('help')) {
