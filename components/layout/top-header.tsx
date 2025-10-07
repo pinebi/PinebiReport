@@ -21,7 +21,12 @@ import {
   TestTube,
   Palette,
   Menu,
-  X
+  X,
+  Mic,
+  Bot,
+  Shuffle,
+  PencilRuler,
+  MessageSquare
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { clsx } from 'clsx'
@@ -156,6 +161,50 @@ const topMenuItems: TopMenuItem[] = [
     label: 'Tema',
     icon: <Palette className="w-4 h-4" />,
     href: '/theme'
+  },
+  {
+    id: 'new-features',
+    label: 'Yeni Özellikler',
+    icon: <Bot className="w-4 h-4" />,
+    href: '#',
+    children: [
+      {
+        id: 'voice-commands',
+        label: 'Sesli Komutlar',
+        icon: <Mic className="w-4 h-4" />,
+        href: '#voice'
+      },
+      {
+        id: 'ai-chatbot',
+        label: 'AI Asistan',
+        icon: <Bot className="w-4 h-4" />,
+        href: '#chatbot'
+      },
+      {
+        id: 'comparison',
+        label: 'Karşılaştırma Modu',
+        icon: <Shuffle className="w-4 h-4" />,
+        href: '/comparison'
+      },
+      {
+        id: 'report-designer',
+        label: 'Rapor Tasarımcı',
+        icon: <PencilRuler className="w-4 h-4" />,
+        href: '/report-designer'
+      },
+      {
+        id: 'theme-customizer',
+        label: 'Tema Kişiselleştirme',
+        icon: <Palette className="w-4 h-4" />,
+        href: '#theme-custom'
+      },
+      {
+        id: 'whatsapp',
+        label: 'WhatsApp Bildirim',
+        icon: <MessageSquare className="w-4 h-4" />,
+        href: '#whatsapp'
+      }
+    ]
   }
 ]
 

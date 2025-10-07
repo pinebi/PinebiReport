@@ -6,6 +6,8 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 import { DashboardProvider } from '@/contexts/DashboardContext'
 import { ToastProvider } from '@/contexts/ToastContext'
 import { LayoutWrapper } from '@/components/layout/layout-wrapper'
+import { VoiceControlButton } from '@/components/ui/voice-control-button'
+import { DashboardChatbot } from '@/components/ai/dashboard-chatbot'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -51,6 +53,9 @@ export default function RootLayout({
               <LayoutWrapper>
                 {children}
               </LayoutWrapper>
+              {/* Yeni Özellikler - Floating Components */}
+              <VoiceControlButton />
+              <DashboardChatbot />
             </ToastProvider>
           </DashboardProvider>
         </ThemeProvider>
