@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Calendar } from 'lucide-react'
+import { Calendar, Trash2 } from 'lucide-react'
 
 interface DashboardHeaderProps {
   title: string
@@ -31,6 +31,21 @@ export function DashboardHeader({
   const handleUpdate = () => {
     onDateChange(localStartDate, localEndDate)
     onUpdate()
+  }
+
+  const handleClearCache = () => {
+    // Tüm dashboard cache'lerini temizle
+    const keys = Object.keys(localStorage);
+    let cleared = 0;
+    keys.forEach(key => {
+      if (key.startsWith('dashboard_')) {
+        localStorage.removeItem(key);
+        cleared++;
+      }
+    });
+    console.log(`🗑️ ${cleared} cache silindi`);
+    alert(`Cache temizlendi! (${cleared} kayıt silindi)\n\nSayfa yenileniyor...`);
+    window.location.reload();
   }
 
   return (
@@ -78,9 +93,20 @@ export function DashboardHeader({
               <Calendar className="w-4 h-4 mr-2" />
               Güncelle
             </Button>
+
+            <Button 
+              onClick={handleClearCache}
+              variant="outline"
+              className="border-red-300 text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Cache Temizle
+            </Button>
+
           </div>
         </CardContent>
       </Card>
+
     </div>
   )
 }

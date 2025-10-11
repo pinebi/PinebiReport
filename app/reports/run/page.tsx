@@ -58,8 +58,8 @@ export default function RunReportsPage() {
   const [showResults, setShowResults] = useState(false)
   const [resultsView, setResultsView] = useState<'grid' | 'pivot'>('grid')
   const [currentResultsReport, setCurrentResultsReport] = useState<ReportConfig | null>(null)
-  const [startDate, setStartDate] = useState<string>('')
-  const [endDate, setEndDate] = useState<string>('')
+  const [startDate, setStartDate] = useState<string>(new Date().toISOString().split('T')[0]) // Bugün
+  const [endDate, setEndDate] = useState<string>(new Date().toISOString().split('T')[0]) // Bugün
 
   // Auto-select report if reportId is provided
   useEffect(() => {
@@ -88,10 +88,17 @@ export default function RunReportsPage() {
           let filteredReports = reportsData.reports || []
           
           // Filter reports based on user role, company, user assignment, showInMenu
+          console.log('🔍 DEBUG: Total reports before filtering:', filteredReports.length)
+          console.log('🔍 DEBUG: User role:', user.role)
+          
           if (user.role === 'ADMIN') {
             // Admin users: see all active reports with showInMenu
             filteredReports = filteredReports.filter((report: any) => {
-              return report.isActive && report.showInMenu !== false
+              const shouldShow = report.isActive && report.showInMenu !== false
+              if (report.name && report.name.includes('Koç')) {
+                console.log('🔍 DEBUG: Koç Ailem - isActive:', report.isActive, 'showInMenu:', report.showInMenu, 'shouldShow:', shouldShow)
+              }
+              return shouldShow
             })
             console.log(`👑 ${user.role} user sees all active reports with showInMenu:`, filteredReports.length)
           } else if (user.role === 'REPORTER') {
@@ -744,7 +751,7 @@ export default function RunReportsPage() {
                     name="startDate" 
                     type="date"
                     required 
-                    defaultValue="2024-03-01"
+                    defaultValue={new Date().toISOString().split('T')[0]}
                   />
                 </div>
                 <div>
@@ -754,7 +761,7 @@ export default function RunReportsPage() {
                     name="endDate" 
                     type="date"
                     required 
-                    defaultValue="2024-03-31"
+                    defaultValue={new Date().toISOString().split('T')[0]}
                   />
                 </div>
               </div>

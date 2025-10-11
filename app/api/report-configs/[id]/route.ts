@@ -27,6 +27,16 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   try {
     const data = await request.json()
     
+    console.log('🔄 PUT /api/report-configs/[id] - Report ID:', params.id)
+    console.log('📦 Request data:', {
+      name: data.name,
+      categoryId: data.categoryId,
+      companyId: data.companyId,
+      userId: data.userId,
+      isActive: data.isActive,
+      showInMenu: data.showInMenu
+    })
+    
     // Parse headers if it's a string, otherwise use as object
     let headersData: any = {}
     if (typeof data.headers === 'string') {
@@ -55,6 +65,7 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     }
 
     if (data.categoryId) {
+      console.log('📂 Updating category to:', data.categoryId)
       // Map mock ids to DB categories if needed
       try {
         let catId = data.categoryId
@@ -96,7 +107,11 @@ export async function PUT(request: Request, { params }: { params: { id: string }
       console.error('FK validation (PUT) error:', e)
     }
 
+    console.log('💾 Final updateData:', updateData)
+    
     const report = await db.reportConfig.update(params.id, updateData)
+    
+    console.log('✅ Report updated successfully:', report.id)
     
     return NextResponse.json({ report })
   } catch (error) {

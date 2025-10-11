@@ -76,12 +76,10 @@ function MainDashboard() {
   const [isLiveData, setIsLiveData] = useState(false)
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
   const [startDate, setStartDate] = useState(() => {
-    const date = new Date()
-    date.setDate(date.getDate() - 1) // Default to yesterday
-    return date.toISOString().split('T')[0]
+    return new Date().toISOString().split('T')[0] // Bugün
   })
   const [endDate, setEndDate] = useState(() => {
-    return new Date().toISOString().split('T')[0]
+    return new Date().toISOString().split('T')[0] // Bugün
   })
 
   // Performance optimization
@@ -226,39 +224,39 @@ function MainDashboard() {
   }
 
   const fetchDashboardDataWithDates = async (start: string, end: string) => {
+    // CACHE KONTROLÜ - DEVRE DIŞI (Gerçek veri için)
+    const cacheKey = `dashboard_${user?.id}_${start}_${end}`;
+    
+    // ESKİ MOCK CACHE'LERİ TEMİZLE
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('dashboard_')) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach(key => localStorage.removeItem(key));
+    if (keysToRemove.length > 0) {
+      console.log(`🗑️ ${keysToRemove.length} eski cache silindi`);
+    }
+
     setLoading(true)
 
     try {
       console.log('🚀 Loading dashboard data from API with dates:', { start, end })
-      console.log('👤 Current user:', user)
-      console.log('🏢 User company:', user?.company)
-      console.log('🏢 User company name:', user?.company?.name)
-
-      // Admin kullanıcısı için firma belirleme
-      let firma = 'RMK' // Varsayılan
-      
-      if (user?.role === 'ADMIN') {
-        // Admin her zaman RMK görür
-        firma = 'RMK'
-        console.log('👑 Admin user detected - using RMK')
-      } else if (user?.company?.name) {
-        // Diğer kullanıcılar kendi firmasını görür
-        firma = user.company.name
-        console.log('👤 Regular user detected - using company:', firma)
-      }
 
       const requestBody = {
         startDate: start,
-        endDate: end,
-        firma: firma,
-        userCompany: firma // Kullanıcının şirket adını ayrı olarak gönder
+        endDate: end
       }
-      
-      console.log('📅 Request body:', requestBody)
 
       // Get auth token from localStorage
       const token = localStorage.getItem('token')
       const authHeaders = token ? { 'Authorization': `Bearer ${token}` } : {}
+      
+      // 90 saniye timeout (gerçek veri için)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 90000);
       
       const response = await fetch('/api/dashboard', {
         method: 'POST',
@@ -267,39 +265,41 @@ function MainDashboard() {
           ...authHeaders
         },
         body: JSON.stringify(requestBody),
+        signal: controller.signal,
       })
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         throw new Error(`API request failed: ${response.status}`)
       }
 
       const result = await response.json()
-      console.log('✅ API response received:', result)
+      console.log('✅ API response received')
 
       if (result.success && result.data) {
-        console.log('🔍 API result received:', result)
-        console.log('🔍 API already processed data:', result.data)
-        console.log('🔍 KPI Data from API:', result.data.kpiData)
+        // CACHE DEVRE DIŞI - HER ZAMAN YENİ VERİ ÇEK
+        console.log('✅ Real data loaded:', {
+          toplamCiro: result.data?.kpiData?.toplamCiro,
+          nakit: result.data?.kpiData?.nakit
+        });
         
-        // API'de zaten veriler işlenmiş, direkt kullan
         setData(result.data)
-        setIsLiveData(!result.isMock)
+        setIsLiveData(true)
         setLastUpdate(new Date())
-        console.log('✅ Real data loaded successfully')
-        if (result.isMock) {
-          console.log('⚠️ Using mock data due to API error')
-        } else {
-          console.log('🎉 Live data from Pinebi API!')
-        }
       } else {
-        throw new Error('Invalid API response')
+        console.error('❌ API dönen hata:', result.error);
+        throw new Error(result.error || 'API request failed')
       }
 
-    } catch (error) {
-      console.error('Error loading dashboard data:', error)
-      console.log('🔄 Falling back to mock data')
-      const mockData = getDefaultDashboardData()
-      setData(mockData)
+    } catch (error: any) {
+      console.error('❌ Dashboard data loading failed:', error)
+      console.error('❌ Error type:', error.name);
+      console.error('❌ Error message:', error.message);
+      
+      // Hata durumunda boş veri göster
+      setData(getDefaultDashboardData());
+      setIsLiveData(false);
     } finally {
       setLoading(false)
     }
@@ -314,11 +314,11 @@ function MainDashboard() {
 
   const getDefaultDashboardData = (): DashboardData => ({
     kpiData: {
-      toplamCiro: 202488.00,
-      nakit: 46133.00,
-      krediKarti: 134835.00,
-      nakitKrediKarti: 180968.00,
-      acikHesap: 21700.00
+      toplamCiro: 0,
+      nakit: 0,
+      krediKarti: 0,
+      nakitKrediKarti: 0,
+      acikHesap: 0
     },
     paymentDistribution: [
       { name: 'Nakit', value: 46133, color: '#10b981' },
@@ -412,14 +412,38 @@ function MainDashboard() {
     }
   }, [user]) // user değiştiğinde veya component mount edildiğinde bir kez çağır
 
-  if (loading || !data) {
+  if (loading) {
     return (
-            <PinebiLoader 
-              size="large" 
-              text="Dashboard verileri yükleniyor..." 
-              fullScreen={false}
-              variant="modern"
-            />
+      <PinebiLoader 
+        size="large" 
+        text="Dashboard verileri yükleniyor..." 
+        fullScreen={false}
+        variant="modern"
+      />
+    )
+  }
+
+  if (!data) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] p-8">
+        <div className="text-center">
+          <div className="text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            Veri Yüklenemedi
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            Dashboard verileri yüklenirken bir hata oluştu.
+            <br />
+            API bağlantısını kontrol edin ve tekrar deneyin.
+          </p>
+          <button
+            onClick={handleUpdate}
+            className="px-6 py-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition-colors"
+          >
+            Tekrar Dene
+          </button>
+        </div>
+      </div>
     )
   }
 
@@ -500,6 +524,7 @@ function MainDashboard() {
           </AnimatedCard>
         </div>
       </div>
+
     </div>
     </PullToRefresh>
   )

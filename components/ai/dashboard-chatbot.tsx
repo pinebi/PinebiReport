@@ -42,6 +42,9 @@ export function DashboardChatbot() {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const [reports, setReports] = useState<any[]>([]);
+  const [lastFetchTime, setLastFetchTime] = useState<number>(0); // Cache için
+  const [lastFetchParams, setLastFetchParams] = useState<string>(''); // Parametreleri kontrol et
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const [messages, setMessages] = useState<Message[]>([
@@ -76,9 +79,9 @@ export function DashboardChatbot() {
     }
   }, [user]);
 
-  // Dashboard verilerini çek
+  // Dashboard verilerini ve raporları çek
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchData = async () => {
       if (!user) return;
 
       try {
@@ -93,51 +96,212 @@ export function DashboardChatbot() {
 
         console.log('🤖 AI Chatbot - Fetching data for company:', firma);
 
-        const response = await fetch('/api/dashboard', {
+        // Dashboard verilerini çek
+        const dashboardResponse = await fetch('/api/dashboard', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            startDate: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
-            endDate: new Date().toISOString().split('T')[0],
+            startDate: new Date().toISOString().split('T')[0], // Bugün
+            endDate: new Date().toISOString().split('T')[0], // Bugün
             firma: firma
           }),
         });
 
-        if (response.ok) {
-          const result = await response.json();
+        if (dashboardResponse.ok) {
+          const result = await dashboardResponse.json();
           if (result.success) {
             setDashboardData(result.data);
-            console.log('🤖 AI Chatbot - Dashboard data loaded:', result.data);
+            console.log('🤖 AI Chatbot - Dashboard data loaded');
           }
         }
+
+        // Raporları çek
+        const reportsResponse = await fetch(`/api/report-configs?companyId=${user.companyId}&userId=${user.id}&userRole=${user.role}`);
+        if (reportsResponse.ok) {
+          const reportsData = await reportsResponse.json();
+          setReports(reportsData);
+          console.log('🤖 AI Chatbot - Reports loaded:', reportsData.length);
+        }
       } catch (error) {
-        console.error('🤖 AI Chatbot - Error loading dashboard data:', error);
+        console.error('🤖 AI Chatbot - Error loading data:', error);
       }
     };
 
     if (isOpen) {
-      fetchDashboardData();
+      fetchData();
     }
   }, [isOpen, user]);
 
   const processQuery = async (query: string) => {
-    const lowerQuery = query.toLowerCase();
-
-    // Simulate AI processing
     setIsTyping(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // freshData'yı en başta tanımla (scope için)
+    let freshData = dashboardData;
+
+    try {
+      // Firma belirleme (RMK veya BELPAS)
+      let firma = 'RMK'; // Varsayılan
+      if (user?.role === 'ADMIN') {
+        firma = 'RMK';
+      } else if (user?.company?.name) {
+        firma = user.company.name.toUpperCase();
+      }
+
+      // Tarih aralığı belirleme (bugün, haftalık, vb.)
+      let startDate = new Date().toISOString().split('T')[0]; // Bugün
+      let endDate = new Date().toISOString().split('T')[0]; // Bugün
+
+      const lowerQuery = query.toLowerCase();
+      
+      // "bugün" veya "today" denmişse
+      if (lowerQuery.includes('bugün') || lowerQuery.includes('today')) {
+        startDate = new Date().toISOString().split('T')[0];
+        endDate = new Date().toISOString().split('T')[0];
+        console.log('🤖 AI - Bugün verisi istendi:', { startDate, endDate, firma });
+      }
+      // "hafta" veya "week" denmişse
+      else if (lowerQuery.includes('hafta') || lowerQuery.includes('week')) {
+        startDate = new Date(new Date().setDate(new Date().getDate() - 7)).toISOString().split('T')[0];
+        endDate = new Date().toISOString().split('T')[0];
+        console.log('🤖 AI - Haftalık veri istendi:', { startDate, endDate, firma });
+      }
+      // "ay" veya "month" denmişse (30 gün öncesinden bugüne)
+      else if (lowerQuery.includes('ay') || lowerQuery.includes('month') || lowerQuery.includes('aylık')) {
+        startDate = new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]; // 30 gün önce
+        endDate = new Date().toISOString().split('T')[0]; // Bugün
+        console.log('🤖 AI - Aylık veri istendi:', { startDate, endDate, firma });
+      }
+
+      // Firma bazlı veri yenileme - CACHE KONTROLÜ
+      if (lowerQuery.includes('satış') || lowerQuery.includes('ciro') || lowerQuery.includes('rapor') || 
+          lowerQuery.includes('bugün') || lowerQuery.includes('hafta') || lowerQuery.includes('ay')) {
+        
+        // Cache key oluştur
+        const cacheKey = `${firma}-${startDate}-${endDate}`;
+        const now = Date.now();
+        const cacheAge = now - lastFetchTime;
+        
+        // Cache kontrolü: Aynı parametrelerle 60 saniye içinde çekilmişse, tekrar çekme
+        const shouldFetch = lastFetchParams !== cacheKey || cacheAge > 60000 || !dashboardData;
+        
+        if (shouldFetch) {
+          console.log(`🤖 AI - ${firma} için YENİ veri çekiliyor:`, { startDate, endDate, cacheAge });
+          
+          try {
+            // 90 saniye timeout (gerçek veri için)
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 90000);
+            
+            const dashboardResponse = await fetch('/api/dashboard', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                startDate,
+                endDate,
+                firma
+              }),
+              signal: controller.signal,
+            });
+            
+            clearTimeout(timeoutId);
+
+            if (dashboardResponse.ok) {
+              const result = await dashboardResponse.json();
+              if (result.success && result.data) {
+                freshData = result.data;
+                setDashboardData(result.data);
+                setLastFetchTime(now);
+                setLastFetchParams(cacheKey);
+                console.log(`✅ ${firma} dashboard verisi güncellendi (${Date.now() - now}ms):`, {
+                  toplamCiro: freshData?.kpiData?.toplamCiro
+                });
+              }
+            } else {
+              console.error('🤖 AI - Dashboard API hatası:', dashboardResponse.status);
+            }
+          } catch (error: any) {
+            console.error('🤖 AI - Dashboard veri çekme hatası:', error.message);
+          
+          // Timeout veya hata durumunda özel mesaj
+          setIsTyping(false);
+          
+          const isTimeout = error.name === 'AbortError' || error.message.includes('aborted');
+          
+          if (isTimeout) {
+            return `⏰ ${firma} firması için veri yüklenirken zaman aşımı oluştu.\n\n` +
+                   `API sunucusu 90 saniye içinde yanıt vermedi.\n\n` +
+                   `💡 Öneriler:\n` +
+                   `• Birkaç dakika sonra tekrar deneyin\n` +
+                   `• Dashboard sayfasını kontrol edin\n` +
+                   `• Daha kısa tarih aralığı seçin`;
+          }
+          
+          return `⚠️ ${firma} için güncel veriler yüklenirken bir hata oluştu.\n\n` +
+                 `Hata: ${error.message}\n\n` +
+                 `Lütfen daha sonra tekrar deneyin veya dashboard sayfasını kontrol edin.`;
+          }
+        } else {
+          // Cache kullan - Hızlı yanıt!
+          console.log(`⚡ ${firma} için CACHE kullanılıyor (${cacheAge}ms önce çekildi)`);
+          freshData = dashboardData;
+        }
+      }
+
+      // AI API'ye istek gönder - GÜNCEL VERİYİ KULLAN
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messages: messages.map(m => ({
+            role: m.role,
+            content: m.content
+          })),
+          dashboardData: freshData, // YENİ VERİYİ GÖNDER
+          reports,
+          userContext: {
+            firma,
+            userName: user ? `${user.firstName} ${user.lastName}` : 'Kullanıcı',
+            role: user?.role,
+            startDate,
+            endDate
+          }
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setIsTyping(false);
+        return result.message;
+      }
+    } catch (error) {
+      console.error('🤖 AI error:', error);
+    }
+
     setIsTyping(false);
 
-    let response = '';
+    // Fallback response - GÜNCEL VERİYİ KULLAN
+    const lowerQuery = query.toLowerCase();
+    let responseText = '';
     let actions: any[] = [];
 
-    // Firma bilgisi
+    // Firma bilgisi ve GÜNCEL VERİ
     const firmaName = user?.role === 'ADMIN' ? 'RMK' : (user?.company?.name || 'RMK');
-    const kpiData = dashboardData?.kpiData;
-    const topCustomers = dashboardData?.topCustomers || [];
-    const companyPerformance = dashboardData?.companyPerformance || [];
+    
+    // freshData'yı kullan (eğer yeni çekildiyse, yoksa dashboardData'yı kullan)
+    const currentData = freshData || dashboardData;
+    const kpiData = currentData?.kpiData;
+    const topCustomers = currentData?.topCustomers || [];
+    const companyPerformance = currentData?.companyPerformance || [];
+    
+    console.log('🤖 AI Fallback - Query:', lowerQuery);
+    console.log('🤖 AI Fallback - currentData:', currentData ? 'VAR' : 'YOK');
+    console.log('🤖 AI Fallback - kpiData:', kpiData);
 
     // Format currency
     const formatCurrency = (value: number) => {
@@ -150,21 +314,32 @@ export function DashboardChatbot() {
     };
 
     // Bugünkü satışlar
-    if (lowerQuery.includes('bugün') || lowerQuery.includes('today')) {
-      if (kpiData && dashboardData) {
+    if (lowerQuery.includes('bugün') || lowerQuery.includes('today') || lowerQuery.includes('satış')) {
+      if (kpiData && currentData) {
         const topCustomer = topCustomers[0];
-        response = `📊 ${firmaName} - Bugünkü satışlar: ${formatCurrency(kpiData.toplamCiro)}\n\n` +
+        const today = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' });
+        
+        console.log('🤖 AI Fallback - KPI Data:', kpiData);
+        
+        responseText = `📊 ${firmaName} - Satışlar: ${formatCurrency(kpiData.toplamCiro)}\n` +
+                   `📅 Tarih: ${today}\n\n` +
                    `• Nakit: ${formatCurrency(kpiData.nakit)}\n` +
                    `• Kredi Kartı: ${formatCurrency(kpiData.krediKarti)}\n` +
                    `• Açık Hesap: ${formatCurrency(kpiData.acikHesap)}\n`;
         
         if (topCustomer) {
-          response += `\n• En çok alan: ${topCustomer.name} (${formatCurrency(topCustomer.amount)})\n`;
+          responseText += `\n• En çok alan: ${topCustomer.name} (${formatCurrency(topCustomer.amount)})\n`;
         }
         
-        response += '\nDetaylı rapor ister misiniz?';
+        responseText += `\nℹ️ ${firmaName} firması için Satış Raporu ${firmaName} API kullanıldı.\n\nDetaylı rapor ister misiniz?`;
       } else {
-        response = `⏳ ${firmaName} için veriler yükleniyor...\n\nLütfen birkaç saniye bekleyin ve tekrar deneyin.`;
+        console.log('🤖 AI Fallback - No KPI Data available');
+        responseText = `⏰ ${firmaName} için veriler yüklenemedi.\n\n` +
+                   `API sunucusu yanıt vermedi (90 saniye timeout).\n\n` +
+                   `💡 Öneriler:\n` +
+                   `• Birkaç dakika bekleyin ve tekrar deneyin\n` +
+                   `• Dashboard sayfasını kontrol edin\n` +
+                   `• Sistem yöneticisiyle iletişime geçin`;
       }
       
       actions = [
@@ -180,17 +355,24 @@ export function DashboardChatbot() {
     }
     // Haftalık özet
     else if (lowerQuery.includes('hafta') || lowerQuery.includes('week')) {
-      response = '📅 Bu hafta özeti:\n\n' +
-                 '• Toplam ciro: 1.2M₺\n' +
-                 '• Ortalama günlük: 171K₺\n' +
-                 '• Geçen haftaya göre %8 artış 🎉\n' +
-                 '• En iyi gün: Cuma (245K₺)\n' +
-                 '• Toplam müşteri: 1.234\n\n' +
-                 'Güzel bir hafta geçirdiniz! 🌟';
+      if (kpiData && dashboardData) {
+        const weekStart = new Date(new Date().setDate(new Date().getDate() - 7)).toLocaleDateString('tr-TR', { day: '2-digit', month: 'long' });
+        const today = new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' });
+        responseText = `📅 ${firmaName} - Bu hafta özeti:\n` +
+                   `📅 Tarih: ${weekStart} - ${today}\n\n` +
+                   `• Toplam ciro: ${formatCurrency(kpiData.toplamCiro)}\n` +
+                   `• Nakit: ${formatCurrency(kpiData.nakit)}\n` +
+                   `• Kredi Kartı: ${formatCurrency(kpiData.krediKarti)}\n` +
+                   `• Açık Hesap: ${formatCurrency(kpiData.acikHesap)}\n\n` +
+                   `ℹ️ ${firmaName} firması için Satış Raporu ${firmaName} API kullanıldı.\n\n` +
+                   'Güzel bir hafta geçirdiniz! 🌟';
+      } else {
+        responseText = `⏳ ${firmaName} için haftalık veriler yükleniyor...\n\nLütfen birkaç saniye bekleyin ve tekrar deneyin.`;
+      }
     }
     // Aylık karşılaştırma
     else if (lowerQuery.includes('ay') || lowerQuery.includes('month')) {
-      response = '📈 Aylık karşılaştırma:\n\n' +
+      responseText = '📈 Aylık karşılaştırma:\n\n' +
                  '• Bu ay (Ekim): 4.2M₺\n' +
                  '• Geçen ay (Eylül): 3.8M₺\n' +
                  '• Fark: +400K₺ (%10.5 artış)\n\n' +
@@ -204,7 +386,7 @@ export function DashboardChatbot() {
     }
     // Excel export
     else if (lowerQuery.includes('excel') || lowerQuery.includes('rapor')) {
-      response = '📄 Excel raporu hazırlanıyor...\n\n' +
+      responseText = '📄 Excel raporu hazırlanıyor...\n\n' +
                  'Hangi dönem için rapor istersiniz?\n' +
                  '• Bugün\n' +
                  '• Bu hafta\n' +
@@ -228,13 +410,13 @@ export function DashboardChatbot() {
     // Top müşteriler
     else if (lowerQuery.includes('müşteri') || lowerQuery.includes('customer')) {
       if (topCustomers && topCustomers.length > 0) {
-        response = `👥 ${firmaName} - En İyi Müşteriler (Top 5):\n\n`;
+        responseText = `👥 ${firmaName} - En İyi Müşteriler (Top 5):\n\n`;
         
         topCustomers.slice(0, 5).forEach((customer: any, index: number) => {
-          response += `${index + 1}. ${customer.name} - ${formatCurrency(customer.amount)}\n`;
+          responseText += `${index + 1}. ${customer.name} - ${formatCurrency(customer.amount)}\n`;
         });
         
-        response += '\nDetaylı müşteri analizi için rapor çalıştırabilirsiniz.';
+        responseText += '\nDetaylı müşteri analizi için rapor çalıştırabilirsiniz.';
         
         actions = [
           {
@@ -243,107 +425,108 @@ export function DashboardChatbot() {
           }
         ];
       } else {
-        response = `⏳ ${firmaName} için müşteri verileri yükleniyor...\n\nLütfen birkaç saniye bekleyin ve tekrar deneyin.`;
+        responseText = `⏳ ${firmaName} için müşteri verileri yükleniyor...\n\nLütfen birkaç saniye bekleyin ve tekrar deneyin.`;
       }
     }
     // Firma performansı
     else if (lowerQuery.includes('performans') || lowerQuery.includes('firma') || lowerQuery.includes('company')) {
       if (companyPerformance && companyPerformance.length > 0) {
-        response = `📈 ${firmaName} - Firma Performansı:\n\n`;
+        responseText = `📈 ${firmaName} - Firma Performansı:\n\n`;
         
         companyPerformance.forEach((company: any) => {
-          response += `• ${company.company}: ${formatCurrency(company.revenue)}\n`;
-          response += `  Müşteri sayısı: ${company.customers}\n`;
+          responseText += `• ${company.company}: ${formatCurrency(company.revenue)}\n`;
+          responseText += `  Müşteri sayısı: ${company.customers}\n`;
           if (company.marketShare) {
-            response += `  Pazar payı: %${company.marketShare.toFixed(1)}\n`;
+            responseText += `  Pazar payı: %${company.marketShare.toFixed(1)}\n`;
           }
-          response += '\n';
+          responseText += '\n';
         });
       } else {
-        response = `⏳ ${firmaName} için performans verileri yükleniyor...\n\nLütfen birkaç saniye bekleyin ve tekrar deneyin.`;
+        responseText = `⏳ ${firmaName} için performans verileri yükleniyor...\n\nLütfen birkaç saniye bekleyin ve tekrar deneyin.`;
       }
     }
     // Nakit satışlar
     else if (lowerQuery.includes('nakit')) {
       if (kpiData) {
         const nakitOran = ((kpiData.nakit / kpiData.toplamCiro) * 100).toFixed(1);
-        response = `💵 ${firmaName} - Nakit Satışlar:\n\n` +
+        responseText = `💵 ${firmaName} - Nakit Satışlar:\n\n` +
                    `• Toplam nakit: ${formatCurrency(kpiData.nakit)}\n` +
                    `• Toplam ciro içindeki payı: %${nakitOran}\n\n`;
         
         if (parseFloat(nakitOran) > 50) {
-          response += '✅ Nakit satışlarınız güçlü! 💪';
+          responseText += '✅ Nakit satışlarınız güçlü! 💪';
         } else {
-          response += '📊 Nakit satışlarınız dengelenmiş durumda.';
+          responseText += '📊 Nakit satışlarınız dengelenmiş durumda.';
         }
       } else {
-        response = `⏳ ${firmaName} için veriler yükleniyor...`;
+        responseText = `⏳ ${firmaName} için veriler yükleniyor...`;
       }
     }
     // Kredi kartı satışlar
     else if (lowerQuery.includes('kredi') || lowerQuery.includes('kart')) {
       if (kpiData) {
         const kartOran = ((kpiData.krediKarti / kpiData.toplamCiro) * 100).toFixed(1);
-        response = `💳 ${firmaName} - Kredi Kartı Satışlar:\n\n` +
+        responseText = `💳 ${firmaName} - Kredi Kartı Satışlar:\n\n` +
                    `• Toplam kredi kartı: ${formatCurrency(kpiData.krediKarti)}\n` +
                    `• Toplam ciro içindeki payı: %${kartOran}\n\n` +
                    '💡 Kredi kartı ile satışlarınız güvenli ve takip edilebilir.';
       } else {
-        response = `⏳ ${firmaName} için veriler yükleniyor...`;
+        responseText = `⏳ ${firmaName} için veriler yükleniyor...`;
       }
     }
     // Açık hesap
     else if (lowerQuery.includes('açık') || lowerQuery.includes('acik') || lowerQuery.includes('hesap')) {
       if (kpiData) {
         const acikHesapOran = ((kpiData.acikHesap / kpiData.toplamCiro) * 100).toFixed(1);
-        response = `📋 ${firmaName} - Açık Hesap Satışlar:\n\n` +
+        responseText = `📋 ${firmaName} - Açık Hesap Satışlar:\n\n` +
                    `• Toplam açık hesap: ${formatCurrency(kpiData.acikHesap)}\n` +
                    `• Toplam ciro içindeki payı: %${acikHesapOran}\n\n`;
         
         if (parseFloat(acikHesapOran) > 30) {
-          response += '⚠️ Açık hesap oranı yüksek. Tahsilatlara dikkat edin!';
+          responseText += '⚠️ Açık hesap oranı yüksek. Tahsilatlara dikkat edin!';
         } else {
-          response += '✅ Açık hesap oranınız dengeli.';
+          responseText += '✅ Açık hesap oranınız dengeli.';
         }
       } else {
-        response = `⏳ ${firmaName} için veriler yükleniyor...`;
+        responseText = `⏳ ${firmaName} için veriler yükleniyor...`;
       }
     }
     // Toplam ciro
     else if (lowerQuery.includes('ciro') || lowerQuery.includes('toplam')) {
       if (kpiData) {
-        response = `💰 ${firmaName} - Toplam Ciro:\n\n` +
+        responseText = `💰 ${firmaName} - Toplam Ciro:\n\n` +
                    `• Genel Toplam: ${formatCurrency(kpiData.toplamCiro)}\n\n` +
                    `Detay:\n` +
                    `• Nakit: ${formatCurrency(kpiData.nakit)} (%${((kpiData.nakit / kpiData.toplamCiro) * 100).toFixed(1)})\n` +
                    `• Kredi Kartı: ${formatCurrency(kpiData.krediKarti)} (%${((kpiData.krediKarti / kpiData.toplamCiro) * 100).toFixed(1)})\n` +
                    `• Açık Hesap: ${formatCurrency(kpiData.acikHesap)} (%${((kpiData.acikHesap / kpiData.toplamCiro) * 100).toFixed(1)})\n\n` +
+                   `ℹ️ ${firmaName} firması için Satış Raporu ${firmaName} API kullanıldı.\n\n` +
                    '🎉 Harika bir performans!';
       } else {
-        response = `⏳ ${firmaName} için veriler yükleniyor...`;
+        responseText = `⏳ ${firmaName} için veriler yükleniyor...`;
       }
     }
     // En iyi müşteri
     else if (lowerQuery.includes('en iyi') || lowerQuery.includes('en çok') || lowerQuery.includes('top')) {
       if (topCustomers && topCustomers.length > 0) {
         const topCustomer = topCustomers[0];
-        response = `🏆 ${firmaName} - En İyi Müşteri:\n\n` +
+        responseText = `🏆 ${firmaName} - En İyi Müşteri:\n\n` +
                    `👑 ${topCustomer.name}\n` +
                    `💰 Toplam: ${formatCurrency(topCustomer.amount)}\n\n` +
                    `Diğer top 3:\n`;
         
         topCustomers.slice(1, 3).forEach((customer: any, index: number) => {
-          response += `${index + 2}. ${customer.name} - ${formatCurrency(customer.amount)}\n`;
+          responseText += `${index + 2}. ${customer.name} - ${formatCurrency(customer.amount)}\n`;
         });
         
-        response += '\n✨ Bu müşterilerinizi koruyun!';
+        responseText += '\n✨ Bu müşterilerinizi koruyun!';
       } else {
-        response = `⏳ ${firmaName} için müşteri verileri yükleniyor...`;
+        responseText = `⏳ ${firmaName} için müşteri verileri yükleniyor...`;
       }
     }
     // Grafik göster
     else if (lowerQuery.includes('grafik') || lowerQuery.includes('chart')) {
-      response = '📊 Hangi grafikleri görmek istersiniz?\n\n' +
+      responseText = '📊 Hangi grafikleri görmek istersiniz?\n\n' +
                  '• Günlük satışlar\n' +
                  '• Ödeme dağılımı\n' +
                  '• Aylık karşılaştırma\n' +
@@ -358,7 +541,7 @@ export function DashboardChatbot() {
     }
     // Tarih sorgulama
     else if (lowerQuery.includes('dün') || lowerQuery.includes('yesterday')) {
-      response = `📅 ${firmaName} - Dünün verileri:\n\n` +
+      responseText = `📅 ${firmaName} - Dünün verileri:\n\n` +
                  `Tarih filtresini değiştirerek dünün verilerini görebilirsiniz.\n\n` +
                  '💡 Dashboard\'da tarih aralığını seçin!';
       actions = [
@@ -370,7 +553,7 @@ export function DashboardChatbot() {
     }
     // Karşılaştırma
     else if (lowerQuery.includes('karşılaştır') || lowerQuery.includes('compare')) {
-      response = '📊 Karşılaştırma Modu:\n\n' +
+      responseText = '📊 Karşılaştırma Modu:\n\n' +
                  'İki dönemi yan yana karşılaştırabilirsiniz!\n\n' +
                  '• Farklı ayları karşılaştırın\n' +
                  '• Yılları karşılaştırın\n' +
@@ -384,7 +567,7 @@ export function DashboardChatbot() {
     }
     // Rapor tasarımcı
     else if (lowerQuery.includes('tasarım') || lowerQuery.includes('designer')) {
-      response = '🎨 Rapor Tasarımcı:\n\n' +
+      responseText = '🎨 Rapor Tasarımcı:\n\n' +
                  'Kendi özel raporlarınızı oluşturun!\n\n' +
                  '• Widget seçin\n' +
                  '• Grafikler ekleyin\n' +
@@ -404,21 +587,21 @@ export function DashboardChatbot() {
       else if (saatler < 18) selamlama = 'İyi günler';
       else selamlama = 'İyi akşamlar';
       
-      response = `${selamlama}! 👋\n\n` +
+      responseText = `${selamlama}! 👋\n\n` +
                  `${firmaName} dashboard asistanınız olarak size yardımcı olmak için buradayım! 🤖\n\n` +
                  'Size nasıl yardımcı olabilirim?';
     }
     // Teşekkür
     else if (lowerQuery.includes('teşekkür') || lowerQuery.includes('tesekkur') || lowerQuery.includes('sağol') || lowerQuery.includes('sagol') || lowerQuery.includes('thanks')) {
-      response = 'Rica ederim! 😊\n\nBaşka bir konuda yardımcı olabilirsem lütfen çekinmeyin!';
+      responseText = 'Rica ederim! 😊\n\nBaşka bir konuda yardımcı olabilirsem lütfen çekinmeyin!';
     }
     // Nasılsın
     else if (lowerQuery.includes('nasıl') || lowerQuery.includes('how are you')) {
-      response = `Ben harikayım, teşekkürler! 🤖✨\n\n${firmaName} için verilerinizi analiz etmeye hazırım. Size nasıl yardımcı olabilirim?`;
+      responseText = `Ben harikayım, teşekkürler! 🤖✨\n\n${firmaName} için verilerinizi analiz etmeye hazırım. Size nasıl yardımcı olabilirim?`;
     }
     // Kim
     else if (lowerQuery.includes('kimsin') || lowerQuery.includes('kim') || lowerQuery.includes('who are you')) {
-      response = `Ben ${firmaName} Dashboard AI Asistanınızım! 🤖\n\n` +
+      responseText = `Ben ${firmaName} Dashboard AI Asistanınızım! 🤖\n\n` +
                  'Size şunlarda yardımcı olabilirim:\n' +
                  '• 📊 Satış ve ciro analizi\n' +
                  '• 👥 Müşteri raporları\n' +
@@ -429,7 +612,7 @@ export function DashboardChatbot() {
     }
     // Yardım
     else if (lowerQuery.includes('yardım') || lowerQuery.includes('help') || lowerQuery.includes('ne yapabilirsin')) {
-      response = '❓ Size yardımcı olabileceğim konular:\n\n' +
+      responseText = '❓ Size yardımcı olabileceğim konular:\n\n' +
                  '📊 **Satış Bilgileri:**\n' +
                  '• "Bugünkü satışlar nasıl?"\n' +
                  '• "Toplam ciro ne kadar?"\n' +
@@ -457,7 +640,7 @@ export function DashboardChatbot() {
                      lowerQuery.includes('hangi');
       
       if (isSoru) {
-        response = `🤔 "${query}" hakkında size yardımcı olmak isterim!\n\n` +
+        responseText = `🤔 "${query}" hakkında size yardımcı olmak isterim!\n\n` +
                    `Şu konularda size daha iyi yardımcı olabilirim:\n\n` +
                    `• 📊 Satışlar ve ciro\n` +
                    `• 👥 Müşteri analizleri\n` +
@@ -465,13 +648,13 @@ export function DashboardChatbot() {
                    `• 📄 Rapor oluşturma\n\n` +
                    `Örnek: "Bugünkü satışlar nasıl?" veya "En iyi müşteriler kimler?"`;
       } else {
-        response = `💬 "${query}"\n\n` +
+        responseText = `💬 "${query}"\n\n` +
                    `Anladım! Size nasıl yardımcı olabilirim?\n\n` +
                    `"yardım" yazarak neler yapabileceğimi öğrenebilirsiniz. 😊`;
       }
     }
 
-    return { response, actions };
+    return responseText;
   };
 
   const handleSend = async () => {
@@ -487,14 +670,13 @@ export function DashboardChatbot() {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
 
-    const { response, actions } = await processQuery(input);
+    const responseText = await processQuery(input);
 
     const assistantMessage: Message = {
       id: (Date.now() + 1).toString(),
       role: 'assistant',
-      content: response,
-      timestamp: new Date(),
-      actions
+      content: responseText,
+      timestamp: new Date()
     };
 
     setMessages(prev => [...prev, assistantMessage]);

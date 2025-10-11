@@ -163,6 +163,12 @@ const topMenuItems: TopMenuItem[] = [
     href: '/theme'
   },
   {
+    id: 'ai-automation',
+    label: 'AI & Otomasyon',
+    icon: <Bot className="w-4 h-4" />,
+    href: '/ai-automation'
+  },
+  {
     id: 'new-features',
     label: 'Yeni Özellikler',
     icon: <Bot className="w-4 h-4" />,

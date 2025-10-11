@@ -30,29 +30,30 @@ model Company {
 }
 
 model User {
-  id                     String               @id @default(cuid())
-  username               String               @unique
-  email                  String               @unique
+  id                     String                 @id @default(cuid())
+  username               String                 @unique
+  email                  String                 @unique
   firstName              String
   lastName               String
   password               String
   companyId              String
-  role                   String               @default("USER")
-  isActive               Boolean              @default(true)
-  createdAt              DateTime             @default(now())
-  updatedAt              DateTime             @updatedAt
-  assignedCalendarEvents CalendarEvent[]      @relation("CalendarEventAssignedTo")
-  createdCalendarEvents  CalendarEvent[]      @relation("CalendarEventCreatedBy")
+  role                   String                 @default("USER")
+  isActive               Boolean                @default(true)
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  assignedCalendarEvents CalendarEvent[]        @relation("CalendarEventAssignedTo")
+  createdCalendarEvents  CalendarEvent[]        @relation("CalendarEventCreatedBy")
   dashboardLayout        DashboardLayout?
   dashboardWidgets       DashboardWidget[]
-  assignedReminders      Reminder[]           @relation("ReminderAssignedTo")
-  createdReminders       Reminder[]           @relation("ReminderCreatedBy")
+  assignedReminders      Reminder[]             @relation("ReminderAssignedTo")
+  createdReminders       Reminder[]             @relation("ReminderCreatedBy")
   reports                ReportConfig[]
   executions             ReportExecution[]
   reportUsers            ReportUsers[]
   gridSettings           UserGridSettings[]
   reportSettings         UserReportSettings[]
-  company                Company              @relation(fields: [companyId], references: [id], onUpdate: NoAction)
+  comparisonFavorites    ComparisonFavorite[]
+  company                Company                @relation(fields: [companyId], references: [id], onUpdate: NoAction)
   theme                  UserTheme?
 
   @@map("Users")
@@ -406,4 +407,22 @@ model Reminder {
   createdBy       User           @relation("ReminderCreatedBy", fields: [createdById], references: [id], onUpdate: NoAction)
 
   @@map("Reminders")
+}
+
+model ComparisonFavorite {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  userId       String
+  period1Start String
+  period1End   String
+  period2Start String
+  period2End   String
+  selectedFirms String? // JSON array of firm names
+  isDefault    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ComparisonFavorites")
 }

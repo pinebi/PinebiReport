@@ -25,8 +25,22 @@ export default function DailyTrendsChart({ data, title = "Günlük Satış Trend
   // Haftalık trendleri hesapla
   const weeklyTrends = sortedData.reduce((acc: any, item) => {
     const date = new Date(item.date)
+    
+    // Invalid tarih kontrolü
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid date:', item.date)
+      return acc
+    }
+    
     const weekStart = new Date(date)
     weekStart.setDate(date.getDate() - date.getDay()) // Pazartesi'den başla
+    
+    // Invalid weekStart kontrolü
+    if (isNaN(weekStart.getTime())) {
+      console.warn('Invalid weekStart:', weekStart)
+      return acc
+    }
+    
     const weekKey = weekStart.toISOString().split('T')[0]
     
     if (!acc[weekKey]) {

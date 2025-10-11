@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext'
 import { usePathname } from 'next/navigation'
 import { TopNavigation } from './top-navigation'
 import { MobileBottomNavigation } from './mobile-navigation'
-import { Breadcrumb, CompactBreadcrumb } from '@/components/ui/breadcrumb'
 import { usePerformance } from '@/hooks/use-performance'
 import { useEffect, useState, memo } from 'react'
 
@@ -42,20 +41,6 @@ export const LayoutWrapper = memo(function LayoutWrapper({ children }: { childre
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900" suppressHydrationWarning={true}>
       <TopNavigation />
       <div className="flex-1">
-        {/* Breadcrumb Navigation */}
-        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
-          <div className="max-w-7xl mx-auto">
-            {/* Desktop Breadcrumb */}
-            <div className="hidden md:block">
-              <Breadcrumb />
-            </div>
-            {/* Mobile Compact Breadcrumb */}
-            <div className="md:hidden">
-              <CompactBreadcrumb />
-            </div>
-          </div>
-        </div>
-        
         <main className="flex-1 pb-16">
           {children}
         </main>

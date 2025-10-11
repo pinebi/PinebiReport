@@ -1,12 +1,24 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Plus, Users, Filter, CheckCircle, AlertCircle, Star } from 'lucide-react';
+import { Calendar, Clock, Plus, Users, Filter, CheckCircle, AlertCircle, Star, Settings, BarChart3, Bot, Trello, GanttChart as GanttIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CalendarView } from '@/components/calendar/calendar-view';
+import { NotificationSettings } from '@/components/calendar/notification-settings';
+import { ReportAutomation } from '@/components/calendar/report-automation';
+import { MeetingManager } from '@/components/calendar/meeting-manager';
+import { RoomReservation } from '@/components/calendar/room-reservation';
+import { KanbanBoard } from '@/components/calendar/kanban-board';
+import { GanttChart } from '@/components/calendar/gantt-chart';
+import { AIScheduler } from '@/components/calendar/ai-scheduler';
+import { CalendarAnalytics } from '@/components/calendar/calendar-analytics';
+import { TeamAvailability } from '@/components/calendar/team-availability';
+import { CalendarSync } from '@/components/calendar/calendar-sync';
 
 interface CalendarEvent {
   id: string;
@@ -89,6 +101,7 @@ export default function CalendarPage() {
   const [filterCompleted, setFilterCompleted] = useState<string>('all');
   const [showCreateEvent, setShowCreateEvent] = useState(false);
   const [showCreateReminder, setShowCreateReminder] = useState(false);
+  const [activeTab, setActiveTab] = useState('calendar');
 
   // Mock data - gerçek uygulamada API'den gelecek
   useEffect(() => {
@@ -273,7 +286,7 @@ export default function CalendarPage() {
       <div className="flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <Calendar className="w-8 h-8 text-blue-600" />
-          <h1 className="text-3xl font-bold">Takvim ve Hatırlatmalar</h1>
+          <h1 className="text-3xl font-bold">Takvim ve Proje Yönetimi</h1>
         </div>
         <div className="flex space-x-2">
           <Button onClick={() => setShowCreateEvent(true)} className="bg-blue-600 hover:bg-blue-700">
@@ -287,191 +300,103 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Filter className="w-5 h-5" />
-            <span>Filtreler</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-2">Kullanıcı</label>
-              <Select value={filterUser} onValueChange={setFilterUser}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Kullanıcı seç" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tümü</SelectItem>
-                  {users.map(user => (
-                    <SelectItem key={user.id} value={user.id}>
-                      {user.firstName} {user.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Öncelik</label>
-              <Select value={filterPriority} onValueChange={setFilterPriority}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Öncelik seç" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tümü</SelectItem>
-                  <SelectItem value="URGENT">Acil</SelectItem>
-                  <SelectItem value="HIGH">Yüksek</SelectItem>
-                  <SelectItem value="MEDIUM">Orta</SelectItem>
-                  <SelectItem value="LOW">Düşük</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Durum</label>
-              <Select value={filterCompleted} onValueChange={setFilterCompleted}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Durum seç" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tümü</SelectItem>
-                  <SelectItem value="pending">Bekleyen</SelectItem>
-                  <SelectItem value="completed">Tamamlanan</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Tarih</label>
-              <Input
-                type="date"
-                value={selectedDate.toISOString().split('T')[0]}
-                onChange={(e) => setSelectedDate(new Date(e.target.value))}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-10">
+          <TabsTrigger value="calendar" className="flex items-center gap-1">
+            <Calendar className="w-4 h-4" />
+            <span className="hidden sm:inline">Takvim</span>
+          </TabsTrigger>
+          <TabsTrigger value="ai" className="flex items-center gap-1">
+            <Bot className="w-4 h-4" />
+            <span className="hidden sm:inline">AI</span>
+          </TabsTrigger>
+          <TabsTrigger value="team" className="flex items-center gap-1">
+            <Users className="w-4 h-4" />
+            <span className="hidden sm:inline">Ekip</span>
+          </TabsTrigger>
+          <TabsTrigger value="meetings" className="flex items-center gap-1">
+            <Users className="w-4 h-4" />
+            <span className="hidden sm:inline">Toplantı</span>
+          </TabsTrigger>
+          <TabsTrigger value="rooms" className="flex items-center gap-1">
+            <Calendar className="w-4 h-4" />
+            <span className="hidden sm:inline">Odalar</span>
+          </TabsTrigger>
+          <TabsTrigger value="kanban" className="flex items-center gap-1">
+            <Trello className="w-4 h-4" />
+            <span className="hidden sm:inline">Kanban</span>
+          </TabsTrigger>
+          <TabsTrigger value="gantt" className="flex items-center gap-1">
+            <GanttIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">Gantt</span>
+          </TabsTrigger>
+          <TabsTrigger value="automation" className="flex items-center gap-1">
+            <Clock className="w-4 h-4" />
+            <span className="hidden sm:inline">Otomasyon</span>
+          </TabsTrigger>
+          <TabsTrigger value="analytics" className="flex items-center gap-1">
+            <BarChart3 className="w-4 h-4" />
+            <span className="hidden sm:inline">Analiz</span>
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="flex items-center gap-1">
+            <Settings className="w-4 h-4" />
+            <span className="hidden sm:inline">Ayarlar</span>
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Events */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Calendar className="w-5 h-5" />
-            <span>Takvim Etkinlikleri ({filteredEvents.length})</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredEvents.map(event => (
-              <div key={event.id} className="border rounded-lg p-4 space-y-2">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-semibold text-lg">{event.title}</h3>
-                      <Badge className={`${getPriorityColor(event.priority)} text-white`}>
-                        {event.priority}
-                      </Badge>
-                      {event.isCompleted && (
-                        <Badge variant="outline" className="text-green-600 border-green-600">
-                          Tamamlandı
-                        </Badge>
-                      )}
-                    </div>
-                    {event.description && (
-                      <p className="text-gray-600 mt-1">{event.description}</p>
-                    )}
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                      <span>{formatDate(event.startDate)}</span>
-                      {event.endDate && <span>- {formatDate(event.endDate)}</span>}
-                      {event.location && <span>📍 {event.location}</span>}
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 rounded-full" style={{ backgroundColor: event.color }}></div>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <div className="flex items-center space-x-4">
-                    <span>Oluşturan: {event.createdBy.firstName} {event.createdBy.lastName}</span>
-                    {event.assignedTo && (
-                      <span>Atanan: {event.assignedTo.firstName} {event.assignedTo.lastName}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {getPriorityIcon(event.priority)}
-                    <span>{event.category}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-            {filteredEvents.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                Filtrelere uygun etkinlik bulunamadı.
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="calendar">
+          <CalendarView
+            events={events}
+            onEventClick={(event) => console.log('Event clicked:', event)}
+            onDateClick={(date) => console.log('Date clicked:', date)}
+            onEventDrop={(eventId, newDate) => console.log('Event dropped:', eventId, newDate)}
+          />
+        </TabsContent>
 
-      {/* Reminders */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Clock className="w-5 h-5" />
-            <span>Hatırlatmalar ({filteredReminders.length})</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {filteredReminders.map(reminder => (
-              <div key={reminder.id} className="border rounded-lg p-4 space-y-2">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-semibold text-lg">{reminder.title}</h3>
-                      <Badge className={`${getPriorityColor(reminder.priority)} text-white`}>
-                        {reminder.priority}
-                      </Badge>
-                      {reminder.isCompleted && (
-                        <Badge variant="outline" className="text-green-600 border-green-600">
-                          Tamamlandı
-                        </Badge>
-                      )}
-                    </div>
-                    {reminder.description && (
-                      <p className="text-gray-600 mt-1">{reminder.description}</p>
-                    )}
-                    <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
-                      <span>📅 {formatDate(reminder.reminderDate)}</span>
-                      {reminder.category && <span>🏷️ {reminder.category}</span>}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <div className="flex items-center space-x-4">
-                    <span>Oluşturan: {reminder.createdBy.firstName} {reminder.createdBy.lastName}</span>
-                    {reminder.assignedTo && (
-                      <span>Atanan: {reminder.assignedTo.firstName} {reminder.assignedTo.lastName}</span>
-                    )}
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    {getPriorityIcon(reminder.priority)}
-                    {reminder.calendarEvent && (
-                      <span>📅 {reminder.calendarEvent.title}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-            {filteredReminders.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                Filtrelere uygun hatırlatma bulunamadı.
-              </div>
-            )}
+        <TabsContent value="ai">
+          <AIScheduler onEventCreate={(event) => console.log('AI created event:', event)} />
+        </TabsContent>
+
+        <TabsContent value="team">
+          <TeamAvailability />
+        </TabsContent>
+
+        <TabsContent value="meetings">
+          <MeetingManager />
+        </TabsContent>
+
+        <TabsContent value="rooms">
+          <RoomReservation
+            date={selectedDate}
+            startTime="09:00"
+            endTime="10:00"
+            onRoomSelect={(room) => console.log('Room selected:', room)}
+          />
+        </TabsContent>
+
+        <TabsContent value="kanban">
+          <KanbanBoard />
+        </TabsContent>
+
+        <TabsContent value="gantt">
+          <GanttChart />
+        </TabsContent>
+
+        <TabsContent value="automation">
+          <ReportAutomation />
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <CalendarAnalytics />
+        </TabsContent>
+
+        <TabsContent value="settings">
+          <div className="space-y-6">
+            <CalendarSync />
+            <NotificationSettings />
           </div>
-        </CardContent>
-      </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

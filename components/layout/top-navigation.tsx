@@ -30,7 +30,8 @@ import {
   Gauge,
   Sparkles,
   Shuffle,
-  PencilRuler
+  PencilRuler,
+  ArrowLeftRight
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { clsx } from 'clsx'
@@ -151,6 +152,18 @@ const getStaticMenuItems = (): Omit<MenuItem, 'icon'>[] => [
         label: 'Rapor Dashboard',
         href: '/reports/dashboard',
         icon: '📈'
+      },
+      {
+        id: 'sales-analytics',
+        label: 'Satış Analiz Dashboard',
+        href: '/analytics',
+        icon: '📊'
+      },
+      {
+        id: 'comparison',
+        label: 'Karşılaştırma Modu',
+        href: '/comparison',
+        icon: '🔄'
       }
     ]
   },
@@ -191,12 +204,6 @@ const getStaticMenuItems = (): Omit<MenuItem, 'icon'>[] => [
     label: 'Yeni Özellikler',
     href: '',
     children: [
-      {
-        id: 'comparison',
-        label: 'Karşılaştırma Modu',
-        href: '/comparison',
-        icon: '📊'
-      },
       {
         id: 'report-designer',
         label: 'Rapor Tasarımcı',
@@ -569,7 +576,7 @@ export function TopNavigation() {
           <div className="relative group" data-dropdown-menu>
             <button
               className={clsx(
-                'flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors rounded-lg',
+                'flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors rounded-lg',
                 'hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-300',
                 isActive && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
                 !isActive && 'text-gray-700 dark:text-gray-300'
@@ -655,7 +662,7 @@ export function TopNavigation() {
           <Link
             href={item.href}
             className={clsx(
-              'flex items-center gap-2 px-4 py-2 text-sm font-medium transition-colors rounded-lg',
+              'flex items-center gap-2 px-3 py-2 text-sm font-medium transition-colors rounded-lg',
               'hover:bg-blue-50 hover:text-blue-700 dark:hover:bg-blue-900/20 dark:hover:text-blue-300',
               isActive && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
               !isActive && 'text-gray-700 dark:text-gray-300'
@@ -692,7 +699,7 @@ export function TopNavigation() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/" className="flex items-center gap-3">
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
                 <FileText className="w-5 h-5 text-white" />
               </div>
@@ -703,12 +710,12 @@ export function TopNavigation() {
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-1">
+          <div className="hidden lg:flex items-center space-x-2">
             {isLoading ? (
-              <div className="flex items-center space-x-1">
-                <Skeleton variant="rectangular" width={80} height={32} className="rounded-md" />
-                <Skeleton variant="rectangular" width={100} height={32} className="rounded-md" />
-                <Skeleton variant="rectangular" width={120} height={32} className="rounded-md" />
+              <div className="flex items-center space-x-2">
+                <Skeleton variant="rectangular" width={90} height={36} className="rounded-full" />
+                <Skeleton variant="rectangular" width={110} height={36} className="rounded-full" />
+                <Skeleton variant="rectangular" width={130} height={36} className="rounded-full" />
               </div>
             ) : (
               filteredMenuItems.map((item) => renderDropdownItem(item))
@@ -721,7 +728,7 @@ export function TopNavigation() {
             <ThemeSelector />
             
             {/* User Info */}
-            <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                 {user.username.charAt(0).toUpperCase()}
               </div>

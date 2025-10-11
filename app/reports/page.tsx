@@ -140,6 +140,12 @@ export default function ReportsPage() {
   }
 
   const columnDefs: ColDef[] = [
+    { 
+      headerName: 'ID', 
+      field: 'id', 
+      width: 250,
+      cellStyle: { fontFamily: 'monospace', fontSize: '12px' }
+    },
     { headerName: 'Rapor Adı', field: 'name', width: 180 },
     { headerName: 'Açıklama', field: 'description', width: 200 },
     { 
@@ -395,7 +401,6 @@ export default function ReportsPage() {
       apiPassword: 'q81ymAbtx1jJ8hoc8IPU79LjPemuXjok2NXYRTa51', // Sabit API şifresi
       apiUserId: formData.get('apiUserId') as string || null, // API User ID
       headers: JSON.stringify(headersObject),
-      parameters: formData.get('parameters') as string || null,
       categoryId: formData.get('categoryId') as string,
       companyId: formData.get('companyId') as string,
       // Backward compatibility: primary user is first selected
@@ -564,21 +569,6 @@ export default function ReportsPage() {
                 />
                 <p className="text-sm text-gray-500 mt-1">
                   Rapor endpoint URL'sini buraya girin (@ olmadan) (örn: http://31.145.34.232:8190/REST.CIRO.RAPOR.TARIH.URUNDETAYLI)
-                </p>
-              </div>
-
-              <div>
-                <Label htmlFor="parameters">Rapor Parametreleri (JSON)</Label>
-                <textarea 
-                  id="parameters"
-                  name="parameters"
-                  rows={6}
-                  placeholder='{"USER": {"required": true, "type": "object", "description": "Kullanıcı bilgileri"}, "START_DATE": {"required": true, "type": "string", "format": "YYYY-MM-DD", "description": "Başlangıç tarihi"}, "END_DATE": {"required": true, "type": "string", "format": "YYYY-MM-DD", "description": "Bitiş tarihi"}}'
-                  defaultValue={(editingReport as any)?.parameters || ''}
-                  className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Raporun ihtiyaç duyduğu parametreleri JSON formatında tanımlayın. Her parametre için type, required, description gibi özellikler belirtebilirsiniz.
                 </p>
               </div>
               
@@ -750,6 +740,7 @@ export default function ReportsPage() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         loading={loading}
+        onRowDoubleClicked={(params: any) => handleEdit(params.data)}
       />
     </div>
   )

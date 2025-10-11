@@ -1,80 +1,43 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server'
 
-// WhatsApp Business API - Bu örnek için Twilio kullanıyoruz
-// Gerçek production'da kendi WhatsApp Business API endpoint'inizi kullanın
-
+// WhatsApp Business API entegrasyonu
 export async function POST(request: NextRequest) {
   try {
-    const { phoneNumber, message, reportData } = await request.json();
-
-    // Format phone number (Türkiye için +90)
-    const formattedPhone = phoneNumber.startsWith('+') 
-      ? phoneNumber 
-      : `+90${phoneNumber.replace(/\D/g, '')}`;
-
-    // Bu örnekte sadece log alıyoruz
-    // Gerçek kullanımda Twilio/WhatsApp Business API'sine istek atılacak
-    console.log('WhatsApp Message:', {
-      to: formattedPhone,
-      message,
-      reportData
-    });
-
-    // Simüle edilmiş başarılı gönderim
-    return NextResponse.json({
-      success: true,
-      message: 'WhatsApp mesajı gönderildi',
-      data: {
-        to: formattedPhone,
-        sentAt: new Date().toISOString()
-      }
-    });
-
-    /*
-    // Gerçek Twilio Örneği:
-    const accountSid = process.env.TWILIO_ACCOUNT_SID;
-    const authToken = process.env.TWILIO_AUTH_TOKEN;
-    const twilioPhone = process.env.TWILIO_WHATSAPP_NUMBER;
-
-    const response = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': 'Basic ' + Buffer.from(`${accountSid}:${authToken}`).toString('base64'),
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          From: `whatsapp:${twilioPhone}`,
-          To: `whatsapp:${formattedPhone}`,
-          Body: message
-        })
-      }
-    );
-
-    const data = await response.json();
+    const { phone, message, eventId } = await request.json()
     
-    if (!response.ok) {
-      throw new Error(data.message || 'WhatsApp gönderim hatası');
-    }
-
+    console.log('📱 Sending WhatsApp message:', { phone, eventId })
+    
+    // WhatsApp Business API kullanarak mesaj gönder
+    // const response = await fetch('https://graph.facebook.com/v18.0/YOUR_PHONE_ID/messages', {
+    //   method: 'POST',
+    //   headers: {
+    //     'Authorization': `Bearer ${process.env.WHATSAPP_ACCESS_TOKEN}`,
+    //     'Content-Type': 'application/json'
+    //   },
+    //   body: JSON.stringify({
+    //     messaging_product: 'whatsapp',
+    //     to: phone,
+    //     type: 'text',
+    //     text: { body: message }
+    //   })
+    // })
+    
+    // Simulate sending
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    console.log('✅ WhatsApp message sent to:', phone)
+    
     return NextResponse.json({
       success: true,
       message: 'WhatsApp mesajı gönderildi',
-      data
-    });
-    */
-
+      messageId: `whatsapp_${Date.now()}`
+    })
+    
   } catch (error: any) {
-    console.error('WhatsApp API Error:', error);
-    return NextResponse.json(
-      { 
-        success: false,
-        error: 'WhatsApp mesajı gönderilemedi',
-        details: error.message 
-      },
-      { status: 500 }
-    );
+    console.error('❌ WhatsApp send error:', error.message)
+    return NextResponse.json({ 
+      success: false, 
+      error: error.message 
+    }, { status: 500 })
   }
 }
-

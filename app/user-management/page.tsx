@@ -28,8 +28,10 @@ import {
   Crown,
   UserCheck,
   UserX,
-  AlertTriangle
+  AlertTriangle,
+  Palette
 } from 'lucide-react'
+import { ThemeSettings } from '@/components/theme/ThemeSettings'
 
 interface User {
   id: string
@@ -202,7 +204,7 @@ export default function UserManagementPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="users" className="flex items-center gap-2">
             <Users className="w-4 h-4" />
             Kullanıcılar
@@ -214,6 +216,10 @@ export default function UserManagementPage() {
           <TabsTrigger value="permissions" className="flex items-center gap-2">
             <Lock className="w-4 h-4" />
             İzinler
+          </TabsTrigger>
+          <TabsTrigger value="theme" className="flex items-center gap-2">
+            <Palette className="w-4 h-4" />
+            Tema
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Settings className="w-4 h-4" />
@@ -438,6 +444,19 @@ export default function UserManagementPage() {
           </Card>
         </TabsContent>
 
+        <TabsContent value="theme" className="space-y-6">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold flex items-center gap-2 mb-2">
+              <Palette className="w-6 h-6 text-purple-600" />
+              Tema ve Görünüm Ayarları
+            </h2>
+            <p className="text-gray-600">
+              Uygulamanın görünümünü ve tema ayarlarını kişiselleştirin
+            </p>
+          </div>
+          <ThemeSettings />
+        </TabsContent>
+
         <TabsContent value="settings" className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
@@ -614,6 +633,11 @@ export default function UserManagementPage() {
     </div>
   )
 }
+
+
+
+
+
 
 
 

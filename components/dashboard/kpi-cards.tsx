@@ -3,8 +3,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { TrendingUp, TrendingDown, Banknote, Users, CreditCard, Wallet } from 'lucide-react'
 import { PinebiLoaderCompact } from '@/components/ui/pinebi-loader'
-import { SwipeableCard } from '@/components/ui/swipeable-card'
-import { HoverScale } from '@/components/ui/hover-scale'
 
 interface KPIData {
   toplamCiro: number
@@ -20,29 +18,13 @@ interface KPICardsProps {
 }
 
 export function KPICards({ data, loading = false }: KPICardsProps) {
+  // Default data if none provided
   const defaultData = {
-    toplamCiro: 0,
-    nakit: 0,
-    krediKarti: 0,
-    nakitKrediKarti: 0,
-    acikHesap: 0
-  }
-
-  const kpiData = data || defaultData
-
-  console.log('🔍 KPICards received data:', data)
-  console.log('🔍 KPICards using kpiData:', kpiData)
-
-  const formatCurrency = (amount: number) => {
-    if (isNaN(amount) || amount === null || amount === undefined) {
-      return '0,00 ₺'
-    }
-    return new Intl.NumberFormat('tr-TR', {
-      style: 'currency',
-      currency: 'TRY',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(amount)
+    toplamCiro: 125000,
+    nakit: 45000,
+    krediKarti: 38000,
+    nakitKrediKarti: 25000,
+    acikHesap: 17000
   }
 
   // Loading durumunda skeleton loader göster
@@ -54,7 +36,7 @@ export function KPICards({ data, loading = false }: KPICardsProps) {
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-3">
                 <div className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700">
-                  <PinebiLoaderCompact size="small" variant="pulse" />
+                  <PinebiLoaderCompact size="small" />
                 </div>
               </div>
               <div className="space-y-2">
@@ -68,73 +50,86 @@ export function KPICards({ data, loading = false }: KPICardsProps) {
     )
   }
 
+  const kpiData = data
+
+  // Debug log
+  console.log('🔍 KPICards received data:', data)
+  console.log('🔍 KPICards using kpiData:', kpiData)
+  const formatCurrency = (amount: number) => {
+    // NaN veya undefined değerleri kontrol et
+    if (isNaN(amount) || amount === null || amount === undefined) {
+      return '0,00 ₺'
+    }
+    return new Intl.NumberFormat('tr-TR', {
+      minimumFractionDigits: 2
+    }).format(amount) + ' ₺'
+  }
+
   const kpiItems = [
     {
       title: 'Toplam Ciro',
       value: kpiData.toplamCiro,
-      description: 'Son 30 günlük toplam satış',
-      icon: <Banknote className="h-5 w-5" />,
+      icon: <Banknote className="w-6 h-6" />,
       color: 'text-green-600',
-      bgColor: 'bg-green-100 dark:bg-green-900'
+      bgColor: 'bg-green-50',
+      description: 'Toplam Ciro'
     },
     {
-      title: 'Nakit Satış',
+      title: 'Nakit',
       value: kpiData.nakit,
-      description: 'Nakit ödeme ile yapılan satışlar',
-      icon: <Wallet className="h-5 w-5" />,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-100 dark:bg-blue-900'
+      icon: <Wallet className="w-6 h-6" />,
+      color: 'text-cyan-600',
+      bgColor: 'bg-cyan-50',
+      description: 'Nakit'
     },
     {
-      title: 'Kredi Kartı Satış',
+      title: 'Kredi Kartı',
       value: kpiData.krediKarti,
-      description: 'Kredi kartı ile yapılan satışlar',
-      icon: <CreditCard className="h-5 w-5" />,
+      icon: <CreditCard className="w-6 h-6" />,
       color: 'text-purple-600',
-      bgColor: 'bg-purple-100 dark:bg-purple-900'
+      bgColor: 'bg-purple-50',
+      description: 'Kredi Kartı'
     },
     {
-      title: 'Nakit + Kredi Kartı',
+      title: 'Nakit+Kredi Kartı',
       value: kpiData.nakitKrediKarti,
-      description: 'Nakit ve Kredi Kartı toplamı',
-      icon: <Banknote className="h-5 w-5" />,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-100 dark:bg-yellow-900'
+      icon: <TrendingUp className="w-6 h-6" />,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      description: 'Nakit+Kredi Kartı'
     },
     {
       title: 'Açık Hesap',
       value: kpiData.acikHesap,
-      description: 'Açık hesap ile yapılan satışlar',
-      icon: <Users className="h-5 w-5" />,
+      icon: <TrendingDown className="w-6 h-6" />,
       color: 'text-red-600',
-      bgColor: 'bg-red-100 dark:bg-red-900'
+      bgColor: 'bg-red-50',
+      description: 'Açık Hesap'
     }
   ]
-  
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-6">
       {kpiItems.map((item, index) => (
-        <HoverScale key={`kpi-${item.title}-${index}`} scale={1.05}>
-          <Card className="hover:shadow-lg transition-all duration-300 ease-out">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className={`p-2 rounded-lg transition-colors duration-300 ${item.bgColor}`}>
-                  <div className={item.color}>
-                    {item.icon}
-                  </div>
+        <Card key={`kpi-${item.title}-${index}`} className="hover:shadow-md transition-shadow">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className={`p-2 rounded-lg ${item.bgColor}`}>
+                <div className={item.color}>
+                  {item.icon}
                 </div>
               </div>
-              <div className="mt-3">
-                <div className={`text-2xl font-bold transition-colors duration-300 ${item.color}`}>
-                  {formatCurrency(item.value)}
-                </div>
-                <div className="text-sm text-gray-600 mt-1 transition-colors duration-300">
-                  {item.description}
-                </div>
+            </div>
+            <div className="mt-3">
+              <div className={`text-2xl font-bold ${item.color}`}>
+                {formatCurrency(item.value)}
               </div>
-            </CardContent>
-          </Card>
-        </HoverScale>
+              <div className="text-sm text-gray-600 mt-1">
+                {item.description}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   )

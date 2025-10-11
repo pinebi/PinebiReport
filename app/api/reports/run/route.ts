@@ -2,20 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('=== REPORT API CALL START ===')
-    console.log('Request received at:', new Date().toISOString())
-    
     const requestBody = await request.json()
-    console.log('Request body received:', JSON.stringify(requestBody, null, 2))
-    
     const { apiUrl, headers, method = 'GET', body } = requestBody
-    console.log('Parsed - API URL:', apiUrl)
-    console.log('Parsed - Headers:', headers)
-    console.log('Parsed - Method:', method)
-    console.log('Parsed - Body:', body)
 
     if (!apiUrl) {
-      console.log('ERROR: No API URL provided')
       return NextResponse.json({ error: 'API URL is required' }, { status: 400 })
     }
 
@@ -26,10 +16,8 @@ export async function POST(request: NextRequest) {
     // Check for endpoint in different header formats
     if (headers && headers.ENDPOINT) {
       endpointInfo = headers.ENDPOINT
-      console.log('Using ENDPOINT from headers:', endpointInfo)
     } else if (headers && headers.url) {
       endpointInfo = headers.url
-      console.log('Using url from headers:', endpointInfo)
     }
     
     // Prepare headers for the external API call
@@ -42,25 +30,11 @@ export async function POST(request: NextRequest) {
     // Add endpoint as header if available
     if (endpointInfo) {
       externalHeaders['ENDPOINT'] = endpointInfo
-      console.log('Added ENDPOINT header:', endpointInfo)
     }
 
     // Make the external API call from the backend with longer timeout
-    console.log('Making external API call to:', targetUrl)
-    console.log('With headers:', externalHeaders)
-    console.log('Request body:', body)
-    console.log('Request body JSON string:', JSON.stringify(body))
-    console.log('Request body keys:', Object.keys(body || {}))
-    console.log('Request body values:', Object.values(body || {}))
-    console.log('Request body entries:', Object.entries(body || {}))
-    console.log('🔍 Checking for @firma parameter:', body && body['@firma'])
-    console.log('🔍 Checking for firma parameter:', body && body['firma'])
-    console.log('🔍 All body parameters:', body)
-    console.log('🔍 Body type:', typeof body)
-    console.log('🔍 Body stringified:', JSON.stringify(body, null, 2))
-    
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 30000) // 30 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 120000) // 120 second timeout (2 minutes)
     
     const response = await fetch(targetUrl, {
       method,
@@ -70,7 +44,6 @@ export async function POST(request: NextRequest) {
     })
     
     clearTimeout(timeoutId)
-    console.log('External API response status:', response.status)
 
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status} ${response.statusText}`)
@@ -81,14 +54,11 @@ export async function POST(request: NextRequest) {
     const contentType = response.headers.get('content-type')
     const responseText = await response.text()
     
-    console.log('Response content-type:', contentType)
-    console.log('Response text (full):', responseText)
-    
     if (contentType && contentType.includes('application/json')) {
       try {
         data = JSON.parse(responseText)
       } catch (parseError) {
-        console.error('JSON parse error:', parseError)
+        console.error('⚠️ JSON parse error')
         if (parseError instanceof Error) {
           throw new Error(`Invalid JSON response: ${parseError.message}`)
         } else {
@@ -112,11 +82,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('Report execution error:', error)
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack
-    })
+    console.error('❌ Report API error:', error.message)
     return NextResponse.json({ 
       error: error.message || 'Report execution failed',
       success: false,

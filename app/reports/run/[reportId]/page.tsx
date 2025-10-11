@@ -86,7 +86,7 @@ export default function RunSpecificReportPage() {
   useEffect(() => {
     if (report && startDate && endDate && !loading && !hasAutoRun) {
       // Check if we have any URL parameters that should trigger auto-run
-      const shouldAutoRun = urlCompanyName || urlClientName || urlFirmId || urlDateFrom || urlDateTo || urlFirma || urlFirmaAdi
+      const shouldAutoRun = urlCompanyName || urlClientName || urlFirmId || urlDateFrom || urlDateTo || urlFirma || urlFirmaAdi || urlStartDate || urlEndDate
       
       if (shouldAutoRun) {
         console.log('🚀 URL parametreleri ile otomatik rapor çalıştırılıyor...', {
@@ -96,7 +96,9 @@ export default function RunSpecificReportPage() {
           urlDateFrom,
           urlDateTo,
           urlFirma,
-          urlFirmaAdi
+          urlFirmaAdi,
+          urlStartDate,
+          urlEndDate
         })
         setHasAutoRun(true)
         setTimeout(() => {
@@ -104,7 +106,7 @@ export default function RunSpecificReportPage() {
         }, 1000)
       }
     }
-  }, [report?.id, startDate, endDate, loading, hasAutoRun, urlCompanyName, urlClientName, urlFirmId, urlDateFrom, urlDateTo, urlFirma, urlFirmaAdi])
+  }, [report?.id, startDate, endDate, loading, hasAutoRun, urlCompanyName, urlClientName, urlFirmId, urlDateFrom, urlDateTo, urlFirma, urlFirmaAdi, urlStartDate, urlEndDate])
 
   // Load report details
   useEffect(() => {
@@ -112,6 +114,31 @@ export default function RunSpecificReportPage() {
       if (!reportId) return
       
       try {
+        // Check if this is a page route report
+        if (reportId.includes('-page')) {
+          console.log('📄 Page route report detected:', reportId)
+          
+          // Handle page route reports differently
+          let redirectUrl = ''
+          switch (reportId) {
+            case 'rapor-dashboard-page':
+              redirectUrl = '/reports/dashboard'
+              break
+            case 'satis-analiz-dashboard-page':
+              redirectUrl = '/analytics'
+              break
+            case 'karsilastirma-modu-page':
+              redirectUrl = '/comparison'
+              break
+            default:
+              redirectUrl = '/'
+          }
+          
+          console.log('🔄 Redirecting to:', redirectUrl)
+          window.location.href = redirectUrl
+          return
+        }
+        
         const response = await fetch(`/api/report-configs/${reportId}`)
         
         if (!response.ok) {
@@ -125,17 +152,6 @@ export default function RunSpecificReportPage() {
         }
         
         setReport(data.report)
-        
-        const today = new Date()
-        const yesterday = new Date(today)
-        yesterday.setDate(today.getDate() - 1)
-        
-        // Set default date range to last 30 days for better data coverage
-        const thirtyDaysAgo = new Date(today)
-        thirtyDaysAgo.setDate(today.getDate() - 30)
-        
-        setStartDate(thirtyDaysAgo.toISOString().split('T')[0])
-        setEndDate(today.toISOString().split('T')[0])
       } catch (error) {
         console.error('Error loading report:', error)
         setError(`Rapor bilgileri yüklenirken hata oluştu: ${error instanceof Error ? error.message : 'Bilinmeyen hata'}`)
@@ -375,7 +391,9 @@ export default function RunSpecificReportPage() {
       return []
     }
 
-    const columns = Object.keys(reportData[0])
+    const columns = Object.keys(reportData[0]).filter(col => 
+      col !== 'ID' && col !== 'faturasiIslendi'
+    )
 
     const baseCols = columns.map((col) => {
       const baseColDef: ColDef = {
@@ -507,12 +525,22 @@ export default function RunSpecificReportPage() {
             
             // Create start date (first day of month)
             const startDate = new Date(dataYear, monthNumber - 1, 1)
-            // Create end date (last day of month)
+            // Create end date (last day of month) - use next month's 0th day
             const endDate = new Date(dataYear, monthNumber, 0)
             
-            // Format dates as YYYY-MM-DD for API
-            const startDateStr = startDate.toISOString().split('T')[0]
-            const endDateStr = endDate.toISOString().split('T')[0]
+            // Format dates as YYYY-MM-DD for API (local timezone)
+            const startDateStr = `${dataYear}-${String(monthNumber).padStart(2, '0')}-01`
+            const endDateStr = `${dataYear}-${String(monthNumber).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`
+            
+            console.log('📅 Ay tıklama - Tarih hesaplama:', {
+              ayNumarasi,
+              dataYear,
+              monthNumber,
+              startDate: startDate.toISOString(),
+              endDate: endDate.toISOString(),
+              startDateStr,
+              endDateStr
+            })
             
             // Navigate to "report_1758563184051_4aznt9g56" report with month dates
             const tumGirislerRaporuId = 'report_1758563184051_4aznt9g56'
